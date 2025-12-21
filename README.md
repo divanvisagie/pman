@@ -45,7 +45,7 @@ The Notes vault follows PARA (Projects, Areas, Resources, Archives). `pman` mana
 
 ## CLI Reference
 
-The CLI reference lives in `docs/cli.md`, including install and command usage.
+The CLI reference lives in [`docs/cli.md`](docs/cli.md), including install and command usage.
 
 ## Resources
 
@@ -53,7 +53,7 @@ This repo includes a generic `AGENTS.md` template at `resources/AGENTS.md`. It d
 
 Keep the agents file up to date. You do not need to be a genius to maintain it: when you notice repeated undesired behavior, ask the agent to update the file directly (e.g., “please add to the agents file not to do X again”).
 
-The HTML manual homepage is `docs/index.html` and is intended for GitHub Pages or any static hosting. Development notes live in `docs/development.md`.
+The HTML manual homepage is `docs/index.html` and is hosted at https://divanv.com/pman/. Development notes live in [`docs/development.md`](docs/development.md).
 
 ## Roadmap
 
