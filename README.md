@@ -63,10 +63,11 @@ Create a new project note and register it.
 
 ```sh
 pman new "Project Name" --status active
+pman new "Runes Notes" --area religion
 ```
 
 Creates:
-- `Notes/Projects/proj-<n>-<slug>/README.md`
+- `Notes/Projects/proj-<n>-<slug>/README.md` (or `proj-<n>-<area>-<slug>` when `--area` is set)
 - Appends to `Notes/Projects/_registry.md`
 
 ### archive
@@ -86,12 +87,18 @@ Moves:
 
 - `--notes-dir <path>` overrides the Notes root (helpful if run outside `~/src` or if Notes is elsewhere).
 - `--status <status>` sets the registry status for `new` (default: `active`).
+- `--area <slug>` prefixes the project directory slug with the area.
 
 ## Behavior details
 
 - Slugs are derived from the project name (ASCII alnum, dash-separated).
 - Slugs are unique across both `Projects` and `Archives/Projects`.
 - Registry format matches the existing `_registry.md` table.
+- Area slugs are optional; when set, they become a prefix in the directory slug.
+
+## Resources
+
+This repo includes a generic `AGENTS.md` template at `resources/AGENTS.md`. It documents baseline project conventions so the workflow can be reproduced without relying on this specific codebase. Adapt it for each workspace and keep it close to the root so humans and AI agents share the same operational context.
 
 ## Development
 

@@ -48,19 +48,30 @@ pub fn resolve_notes_dir(notes_dir: Option<PathBuf>) -> Result<PathBuf> {
     bail!("Could not locate Notes root; use --notes-dir to specify it")
 }
 
-pub fn create_project(paths: &NotesPaths, name: &str, status: &str) -> Result<PathBuf> {
+pub fn create_project(
+    paths: &NotesPaths,
+    name: &str,
+    status: &str,
+    area: Option<&str>,
+) -> Result<PathBuf> {
     ensure_registry(paths)?;
 
     let registry_contents = fs::read_to_string(&paths.registry)
         .with_context(|| format!("Failed to read registry at {}", paths.registry.display()))?;
     let next_id = next_project_id(&registry_contents);
     let slug = slugify(name)?;
+    let area_slug = area.map(slugify).transpose()?;
 
-    if slug_in_use(paths, &slug)? {
-        bail!("Slug already exists in Projects or Archives: {slug}");
+    let slug_full = match area_slug.as_deref() {
+        Some(area_value) => format!("{area_value}-{slug}"),
+        None => slug.clone(),
+    };
+
+    if slug_in_use(paths, &slug_full)? {
+        bail!("Slug already exists in Projects or Archives: {slug_full}");
     }
 
-    let dir_name = format!("proj-{next_id}-{slug}");
+    let dir_name = format!("proj-{next_id}-{slug_full}");
     let note_dir = paths.projects_dir.join(&dir_name);
     let note_path = note_dir.join("README.md");
 
@@ -72,11 +83,16 @@ pub fn create_project(paths: &NotesPaths, name: &str, status: &str) -> Result<Pa
         .with_context(|| format!("Failed to create project directory {}", note_dir.display()))?;
 
     let created = Local::now().format("%Y-%m-%d");
+    let area_section = area_slug
+        .as_deref()
+        .map(|value| format!("\n## Area\n- {value}\n"))
+        .unwrap_or_default();
     let content = format!(
-        "# PROJ-{id}: {name}\n\n## Summary\n- \n\n## Status\n- {status}\n\n## Notes\n- \n\n## Next\n- \n",
+        "# PROJ-{id}: {name}\n\n## Summary\n- \n\n## Status\n- {status}{area}\n## Notes\n- \n\n## Next\n- \n",
         id = next_id,
         name = name,
-        status = status
+        status = status,
+        area = area_section
     );
 
     fs::write(&note_path, content)
@@ -378,7 +394,7 @@ mod tests {
         let archived = paths.archives_projects_dir.join("proj-1-test-slug");
         fs::create_dir_all(archived).unwrap();
 
-        let err = create_project(&paths, "Test Slug", "active")
+        let err = create_project(&paths, "Test Slug", "active", None)
             .unwrap_err()
             .to_string();
         assert!(err.contains("Slug already exists"));
@@ -407,5 +423,21 @@ mod tests {
         let updated = fs::read_to_string(&paths.registry).unwrap();
         assert!(updated.contains("| PROJ-3 | Sample | archived |"));
         assert!(updated.contains("../Archives/Projects/proj-3-sample/README.md"));
+    }
+
+    #[test]
+    fn create_project_includes_area_slug() {
+        let temp = tempdir().unwrap();
+        let root = temp.path();
+        let paths = NotesPaths::from_root(root.to_path_buf());
+        fs::create_dir_all(&paths.projects_dir).unwrap();
+        fs::write(&paths.registry, REGISTRY_HEADER).unwrap();
+
+        let note_path = create_project(&paths, "Runes Notes", "active", Some("religion"))
+            .unwrap();
+
+        assert!(note_path
+            .to_string_lossy()
+            .contains("proj-1-religion-runes-notes/README.md"));
     }
 }

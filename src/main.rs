@@ -20,6 +20,9 @@ enum Commands {
         /// Status label to record in the registry
         #[arg(long, default_value = "active")]
         status: String,
+        /// Area slug to prefix the project directory slug
+        #[arg(long)]
+        area: Option<String>,
         /// Override Notes root directory
         #[arg(long)]
         notes_dir: Option<PathBuf>,
@@ -41,11 +44,12 @@ fn main() -> Result<()> {
         Commands::New {
             name,
             status,
+            area,
             notes_dir,
         } => {
             let root = resolve_notes_dir(notes_dir)?;
             let paths = NotesPaths::from_root(root);
-            let note = create_project(&paths, &name, &status)?;
+            let note = create_project(&paths, &name, &status, area.as_deref())?;
             println!("Created {}", note.display());
         }
         Commands::Archive {
