@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>pman - Project Workflow Manual</title>
+  <link rel="stylesheet" href="https://divanv.com/css/main.css">
+  <script src="https://divanv.com/js/index.js"></script>
+  <style>
+    .pman-container {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 22px;
+    }
+    .pman-card {
+      border: 1px solid var(--subtitle-color);
+      padding: 20px;
+      margin: 18px 0;
+      line-height: 1.6;
+    }
+    .pman-card h2 {
+      margin-top: 0;
+    }
+    .pman-steps {
+      border-left: 2px solid var(--accent-color);
+      padding-left: 16px;
+      margin: 16px 0 0;
+    }
+    .pman-links {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: 12px;
+    }
+    .pman-links a {
+      border: 1px solid var(--subtitle-color);
+      padding: 8px 12px;
+      text-decoration: none;
+    }
+  </style>
+</head>
+<body>
+  <nav>
+    <div>
+      <h1>
+        <a href="/">Divan <span class="full">Visagie</span></a>
+        <span style="color: var(--accent-color); margin: 0 8px;">/</span>
+        <span>pman</span>
+      </h1>
+    </div>
+  </nav>
+
+  <div class="pman-container">
+    <div class="pman-card">
+      <h2>Manual First</h2>
+      <p>
+        pman is the workflow itself. The CLI supports it, but the manual is the source of truth.
+        Use this page to understand the system and the CLI reference to automate it.
+      </p>
+      <div class="pman-links">
+        <a href="https://github.com/divanvisagie/pman">README Manual</a>
+        <a href="https://github.com/divanvisagie/pman/blob/master/docs/cli.md">CLI Reference</a>
+        <a href="https://github.com/divanvisagie/pman/blob/master/resources/AGENTS.md">AGENTS Template</a>
+      </div>
+    </div>
+
+    <div class="pman-card">
+      <h2>Why It Works</h2>
+      <p>
+        The workflow removes ambiguity in naming, structure, and bookkeeping. It keeps
+        humans and agents aligned by enforcing deterministic project creation and a single
+        source of truth for notes.
+      </p>
+    </div>
+
+    <div class="pman-card">
+      <h2>How It Works</h2>
+      <div class="pman-steps">
+        <p>1. Store projects in a reverse-domain tree under <code>~/src</code>.</p>
+        <p>2. Keep notes in <code>~/src/Notes</code> using PARA.</p>
+        <p>3. Create project notes in <code>Notes/Projects</code> with a PROJ id.</p>
+        <p>4. Archive completed projects in <code>Notes/Archives/Projects</code>.</p>
+        <p>5. Keep the AGENTS file up to date as the contract for behavior.</p>
+      </div>
+    </div>
+
+    <div class="pman-card">
+      <h2>Using the CLI</h2>
+      <p>
+        The CLI covers deterministic steps like creating and archiving project notes. It is
+        intentionally small and predictable. See the CLI reference for commands and flags.
+      </p>
+    </div>
+  </div>
+
+  <footer>
+    Divan Visagie &bull; Copyright 2019-25 &bull;
+    <a href="mailto:me@divanv.com">me@divanv.com</a> &bull;
+    <span><a href="/podcast">Podcast</a></span> &bull;
+    <span><a href="/cv">CV</a></span> &bull;
+    <span><a href="https://github.com/divanvisagie">GitHub</a></span>
+  </footer>
+</body>
+</html>

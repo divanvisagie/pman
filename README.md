@@ -104,6 +104,8 @@ This repo includes a generic `AGENTS.md` template at `resources/AGENTS.md`. It d
 
 Keep the agents file up to date. You do not need to be a genius to maintain it: when you notice repeated undesired behavior, ask the agent to update the file directly (e.g., “please add to the agents file not to do X again”).
 
+The CLI reference lives in `docs/cli.md`. The HTML manual homepage is `docs/index.html` and is intended for GitHub Pages or any static hosting.
+
 ## Development
 
 Run tests:
