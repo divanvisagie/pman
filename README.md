@@ -1,6 +1,8 @@
 # pman
 
-`pman` is an opinionated framework for a project workflow that maximizes context reuse, note management, and collaboration between humans, AI agents, and Unix tooling. It draws from the Unix philosophy: small, deterministic commands with predictable outputs. It is not just a helper script: it is the contract for how projects are created, tracked, and archived in this system.
+`pman` is an opinionated framework for a project workflow that maximizes context reuse, note management, and collaboration between humans, AI agents, and Unix tooling. It draws from the Unix philosophy: small, deterministic commands with predictable outputs. The `pman` repository is the source of truth for this workflow, and this README serves as the manual.
+
+Whether you use the `pman` tool or not, the workflow still stands. It can be executed manually, by an AI agent, or by the CLI itself. It can even be implemented in the physical world with notebooks, sticky notes, and string. The value is the workflow, not the tooling.
 
 ## Why this exists
 
@@ -104,5 +106,6 @@ Tests cover slug behavior, id allocation, and archive registry updates.
 ## Roadmap
 
 - `init` and `verify` commands for `~/src` layout and `AGENTS.md` placement.
+- `init` should be a prompt-by-prompt wizard to set up `~/src` and Notes.
 - `notes` commands to set or verify the Notes root and manage symlinks.
 - `list` and `status` commands for PARA reporting.
