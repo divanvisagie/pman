@@ -1,17 +1,35 @@
-# Repository Guidelines (Generic)
+# Repository Guidelines
+
+This file captures the shared workflow conventions for a `~/src` workspace. It is intended to give humans and AI agents the same operating context, regardless of tooling.
 
 ## Project Structure & Module Organization
-- Use a predictable root layout; keep each project in its own folder with a clear purpose.
-- The Notes vault lives at the root of `~/src` as `~/src/Notes` and always follows PARA (Projects, Areas, Resources, Archives).
-- Projects under `~/src` follow a reverse-domain structure (e.g. `com/divanv/project-name`).
-- Every repo in these subfolders should be represented as a note in `Notes/Areas/`, even if it also has a project note.
-- Project notes may reference area notes when a project is part of a long-running responsibility.
+- The workspace root is `~/src` (example layout below).
+- Notes live at `~/src/Notes` and always follow PARA (Projects, Areas, Resources, Archives).
+- Projects follow a reverse-domain structure (e.g. `com/example/project-name`).
+- Every repo in the reverse-domain tree should have a corresponding Area note.
+- Project notes live in `Notes/Projects/` and may reference Areas for long-running work.
 - Store shared workflow docs in a stable location and reference them from project notes.
 - Keep each project independent with its own README, build, and release flow.
 
+Example layout:
+```
+~/src/
+├── com/
+│   ├── example/        # Personal projects
+│   └── orgname/        # Organization projects
+└── Notes/              # PARA vault
+```
+
 ## Build, Test, and Development Commands
-- Document build and test commands in each project README.
+- Each project README lists its build and test commands.
 - Prefer standard tooling (`cargo test`, `make test`, etc.) and keep instructions reproducible.
+
+## Tools
+- `pman` manages the workflow and deterministic Notes operations.
+- `rg` (ripgrep) is the default for fast text and file search.
+- `gh` (GitHub CLI) is the default for interacting with GitHub repositories.
+- `csep` provides semantic search over local text (https://github.com/divanvisagie/csep).
+- `cgip` is a CLI for interacting with OpenAI-compatible LLM APIs (https://github.com/divanvisagie/chat-gipitty).
 
 ## Coding Style & Naming Conventions
 - Follow per-project formatter/linter defaults.
