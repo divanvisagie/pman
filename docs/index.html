@@ -58,7 +58,7 @@
         note management, and collaboration between humans, AI agents, and Unix tooling.
         It draws from the Unix philosophy: small, deterministic commands with predictable
         outputs and a strict hierarchical file structure. The repository is the source of
-        truth for this workflow, and the manual is the point of entry.
+        truth for this workflow, and this page is the entry point.
       </p>
       <p>
         The reason it exists is simple: most workflows fail in the boring parts. Naming,
@@ -70,35 +70,40 @@
       <div class="pman-links">
         <a href="https://github.com/divanvisagie/pman">README Manual</a>
         <a href="https://github.com/divanvisagie/pman/blob/master/docs/cli.md">CLI Reference</a>
-        <a href="https://github.com/divanvisagie/pman/blob/master/resources/AGENTS.md">AGENTS Template</a>
+        <a href="https://raw.githubusercontent.com/divanvisagie/pman/master/resources/AGENTS.md" download>Download AGENTS.md</a>
       </div>
     </div>
 
     <div class="pman-card">
-      <h2>Why It Works</h2>
+      <h2>Set Up Your Workspace</h2>
       <p>
-        The workflow removes ambiguity in naming, structure, and bookkeeping. It keeps
-        humans and agents aligned by enforcing deterministic project creation and a single
-        source of truth for notes.
+        Create a strict hierarchy under <code>~/src</code>. This becomes the single, shared
+        context for both humans and AI agents.
       </p>
-    </div>
-
-    <div class="pman-card">
-      <h2>How It Works</h2>
       <div class="pman-steps">
-        <p>1. Store projects in a reverse-domain tree under <code>~/src</code>.</p>
-        <p>2. Keep notes in <code>~/src/Notes</code> using PARA.</p>
-        <p>3. Create project notes in <code>Notes/Projects</code> with a PROJ id.</p>
-        <p>4. Archive completed projects in <code>Notes/Archives/Projects</code>.</p>
-        <p>5. Keep the AGENTS file up to date as the contract for behavior.</p>
+        <p>1. Create <code>~/src</code> and place your projects in a reverse-domain tree.</p>
+        <p>2. Create <code>~/src/Notes</code> and follow PARA (Projects, Areas, Resources, Archives).</p>
+        <p>3. Copy the AGENTS file into <code>~/src/AGENTS.md</code> as the workflow contract.</p>
       </div>
     </div>
 
     <div class="pman-card">
-      <h2>Using the CLI</h2>
+      <h2>Connect Notes Everywhere</h2>
       <p>
-        The CLI covers deterministic steps like creating and archiving project notes. It is
-        intentionally small and predictable. See the CLI reference for commands and flags.
+        Notes are the shared context. Keep them close to every repo by symlinking or cloning.
+      </p>
+      <div class="pman-steps">
+        <p>1. Symlink <code>~/src/Notes</code> into each project (recommended), or clone it directly.</p>
+        <p>2. Ensure each repo has an Area note and reference it from project notes.</p>
+        <p>3. Use the registry in <code>Notes/Projects</code> to track active work.</p>
+      </div>
+    </div>
+
+    <div class="pman-card">
+      <h2>Run the Workflow</h2>
+      <p>
+        The workflow can be executed manually or automated with the CLI. The CLI only
+        handles deterministic steps like creating and archiving project notes.
       </p>
     </div>
   </div>
