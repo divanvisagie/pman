@@ -4,7 +4,7 @@
 
 The reason it exists is simple: most workflows fail in the boring parts. Naming, structure, and bookkeeping drift over time. `pman` makes those parts deterministic so projects stay searchable, notes stay aligned, and people (or agents) stay in sync.
 
-Whether you use the `pman` tool or not, the workflow still stands. It can be executed manually, by an AI agent, or by the CLI itself. It can even be implemented in the physical world with notebooks, sticky notes, and string if that's what your'e into. The value is the workflow, not the tooling.
+Whether you use the `pman` tool or not, the workflow still stands. It can be executed manually, by an AI agent, or by the CLI itself. It can even be implemented in the physical world with notebooks, sticky notes, and string if that's what you're into. The value is the workflow, not the tooling.
 
 ## What this gives you
 
@@ -43,60 +43,9 @@ This tool assumes a filesystem layout like:
 
 The Notes vault follows PARA (Projects, Areas, Resources, Archives). `pman` manages only the deterministic project lifecycle bits.
 
-## Install
+## CLI Reference
 
-Local install from source:
-
-```sh
-cargo install --path /Users/divan/src/com/divanv/pman
-```
-
-Or run directly:
-
-```sh
-cargo run -- new "Project Name" --status active
-```
-
-## Commands
-
-### new
-
-Create a new project note and register it.
-
-```sh
-pman new "Project Name" --status active
-pman new "Runes Notes" --area religion
-```
-
-Creates:
-- `Notes/Projects/proj-<n>-<slug>/README.md` (or `proj-<n>-<area>-<slug>` when `--area` is set)
-- Appends to `Notes/Projects/_registry.md`
-
-### archive
-
-Archive a project by directory prefix or full name.
-
-```sh
-pman archive proj-22
-pman archive proj-22-some-project
-```
-
-Moves:
-- `Notes/Projects/proj-22-*/` -> `Notes/Archives/Projects/proj-22-*/`
-- Updates registry status to `archived` with the new path.
-
-## Options
-
-- `--notes-dir <path>` overrides the Notes root (helpful if run outside `~/src` or if Notes is elsewhere).
-- `--status <status>` sets the registry status for `new` (default: `active`).
-- `--area <slug>` prefixes the project directory slug with the area.
-
-## Behavior details
-
-- Slugs are derived from the project name (ASCII alnum, dash-separated).
-- Slugs are unique across both `Projects` and `Archives/Projects`.
-- Registry format matches the existing `_registry.md` table.
-- Area slugs are optional; when set, they become a prefix in the directory slug.
+The CLI reference lives in `docs/cli.md`, including install and command usage.
 
 ## Resources
 
@@ -104,8 +53,7 @@ This repo includes a generic `AGENTS.md` template at `resources/AGENTS.md`. It d
 
 Keep the agents file up to date. You do not need to be a genius to maintain it: when you notice repeated undesired behavior, ask the agent to update the file directly (e.g., “please add to the agents file not to do X again”).
 
-The CLI reference lives in `docs/cli.md`. The HTML manual homepage is `docs/index.html` and is intended for GitHub Pages or any static hosting.
-Development notes live in `docs/development.md`.
+The HTML manual homepage is `docs/index.html` and is intended for GitHub Pages or any static hosting. Development notes live in `docs/development.md`.
 
 ## Roadmap
 

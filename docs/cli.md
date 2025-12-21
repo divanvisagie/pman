@@ -8,6 +8,12 @@ This document covers the CLI behavior. The workflow manual lives in the README.
 cargo install --path /path/to/pman
 ```
 
+Or run directly:
+
+```sh
+cargo run -- new "Project Name" --status active
+```
+
 ## Commands
 
 ### new
