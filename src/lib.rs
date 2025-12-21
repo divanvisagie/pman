@@ -60,7 +60,7 @@ pub fn create_project(paths: &NotesPaths, name: &str, status: &str) -> Result<Pa
         bail!("Slug already exists in Projects or Archives: {slug}");
     }
 
-    let dir_name = format!("proj-{:04}-{slug}", next_id);
+    let dir_name = format!("proj-{next_id}-{slug}");
     let note_dir = paths.projects_dir.join(&dir_name);
     let note_path = note_dir.join("README.md");
 
@@ -73,7 +73,7 @@ pub fn create_project(paths: &NotesPaths, name: &str, status: &str) -> Result<Pa
 
     let created = Local::now().format("%Y-%m-%d");
     let content = format!(
-        "# PROJ-{id:04}: {name}\n\n## Summary\n- \n\n## Status\n- {status}\n\n## Notes\n- \n\n## Next\n- \n",
+        "# PROJ-{id}: {name}\n\n## Summary\n- \n\n## Status\n- {status}\n\n## Notes\n- \n\n## Next\n- \n",
         id = next_id,
         name = name,
         status = status
@@ -83,7 +83,7 @@ pub fn create_project(paths: &NotesPaths, name: &str, status: &str) -> Result<Pa
         .with_context(|| format!("Failed to write note {}", note_path.display()))?;
 
     let registry_line = format!(
-        "| PROJ-{id:04} | {name} | {status} | {created} | [{dir}/README.md]({dir}/README.md) |",
+        "| PROJ-{id} | {name} | {status} | {created} | [{dir}/README.md]({dir}/README.md) |",
         id = next_id,
         name = name,
         status = status,
@@ -155,7 +155,7 @@ fn ensure_registry(paths: &NotesPaths) -> Result<()> {
 }
 
 fn next_project_id(registry_contents: &str) -> u32 {
-    let re = Regex::new(r"PROJ-(\d{4})").expect("valid regex");
+    let re = Regex::new(r"PROJ-(\d+)").expect("valid regex");
     let mut max_id = 0u32;
     for cap in re.captures_iter(registry_contents) {
         if let Ok(num) = cap[1].parse::<u32>() {
@@ -225,20 +225,26 @@ fn has_slug_in_dir(dir: &Path, slug: &str) -> Result<bool> {
 }
 
 fn slug_matches_dir(name: &str, slug: &str) -> bool {
-    if !name.starts_with("proj-") || name.len() <= 10 {
+    let suffix = match name.strip_prefix("proj-") {
+        Some(value) => value,
+        None => return false,
+    };
+
+    let mut parts = suffix.splitn(2, '-');
+    let id = match parts.next() {
+        Some(value) => value,
+        None => return false,
+    };
+    let tail = match parts.next() {
+        Some(value) => value,
+        None => return false,
+    };
+
+    if id.is_empty() || !id.chars().all(|ch| ch.is_ascii_digit()) {
         return false;
     }
 
-    let digits = &name[5..9];
-    if !digits.chars().all(|ch| ch.is_ascii_digit()) {
-        return false;
-    }
-
-    if name.as_bytes().get(9) != Some(&b'-') {
-        return false;
-    }
-
-    &name[10..] == slug
+    tail == slug
 }
 
 fn find_project_dir(projects_dir: &Path, input: &str) -> Result<PathBuf> {
@@ -273,16 +279,19 @@ fn find_project_dir(projects_dir: &Path, input: &str) -> Result<PathBuf> {
 }
 
 fn project_id_from_dir(dir_name: &str) -> Result<String> {
-    if !dir_name.starts_with("proj-") || dir_name.len() < 9 {
+    let suffix = dir_name
+        .strip_prefix("proj-")
+        .ok_or_else(|| anyhow::anyhow!("Invalid project directory name: {dir_name}"))?;
+    let id = suffix
+        .splitn(2, '-')
+        .next()
+        .unwrap_or_default();
+
+    if id.is_empty() || !id.chars().all(|ch| ch.is_ascii_digit()) {
         bail!("Invalid project directory name: {dir_name}");
     }
 
-    let digits = &dir_name[5..9];
-    if !digits.chars().all(|ch| ch.is_ascii_digit()) {
-        bail!("Invalid project directory name: {dir_name}");
-    }
-
-    Ok(format!("PROJ-{}", digits))
+    Ok(format!("PROJ-{}", id))
 }
 
 fn update_registry_entry(registry: &Path, proj_id: &str, note_path: &str) -> Result<()> {
@@ -353,7 +362,7 @@ mod tests {
 
     #[test]
     fn next_project_id_increments() {
-        let registry = "| PROJ-0002 | Example |";
+        let registry = "| PROJ-0002 | Example |\n| PROJ-2 | Example |";
         assert_eq!(next_project_id(registry), 3);
     }
 
@@ -366,9 +375,7 @@ mod tests {
         fs::create_dir_all(&paths.archives_projects_dir).unwrap();
         fs::write(&paths.registry, REGISTRY_HEADER).unwrap();
 
-        let archived = paths
-            .archives_projects_dir
-            .join("proj-0001-test-slug");
+        let archived = paths.archives_projects_dir.join("proj-1-test-slug");
         fs::create_dir_all(archived).unwrap();
 
         let err = create_project(&paths, "Test Slug", "active")
@@ -385,20 +392,20 @@ mod tests {
         fs::create_dir_all(&paths.projects_dir).unwrap();
         fs::create_dir_all(&paths.archives_projects_dir).unwrap();
 
-        let proj_dir = paths.projects_dir.join("proj-0003-sample");
+        let proj_dir = paths.projects_dir.join("proj-3-sample");
         fs::create_dir_all(&proj_dir).unwrap();
         fs::write(proj_dir.join("README.md"), "test").unwrap();
 
         let registry = format!(
-            "{header}| PROJ-0003 | Sample | active | 2025-01-01 | [proj-0003-sample/README.md](proj-0003-sample/README.md) |\n",
+            "{header}| PROJ-3 | Sample | active | 2025-01-01 | [proj-3-sample/README.md](proj-3-sample/README.md) |\n",
             header = REGISTRY_HEADER
         );
         fs::write(&paths.registry, registry).unwrap();
 
-        archive_project(&paths, "proj-0003").unwrap();
+        archive_project(&paths, "proj-3").unwrap();
 
         let updated = fs::read_to_string(&paths.registry).unwrap();
-        assert!(updated.contains("| PROJ-0003 | Sample | archived |"));
-        assert!(updated.contains("../Archives/Projects/proj-0003-sample/README.md"));
+        assert!(updated.contains("| PROJ-3 | Sample | archived |"));
+        assert!(updated.contains("../Archives/Projects/proj-3-sample/README.md"));
     }
 }

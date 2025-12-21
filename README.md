@@ -1,6 +1,6 @@
 # pman
 
-`pman` defines and enforces a workflow framework for a reverse-domain `~/src` workspace paired with a PARA-style Notes vault. It is not just a helper script: it is the contract for how projects are created, tracked, and archived in this system.
+`pman` is an opinionated framework for a project workflow that maximizes context reuse, note management, and collaboration between humans, AI agents, and Unix tooling. It draws from the Unix philosophy: small, deterministic commands with predictable outputs. It is not just a helper script: it is the contract for how projects are created, tracked, and archived in this system.
 
 ## Why this exists
 
@@ -19,7 +19,7 @@ The result is a workspace that scales without becoming a mess.
 ## The workflow
 
 1. **Workspace layout**: `~/src` holds projects by reverse-domain. Notes live in `~/src/Notes` using PARA.
-2. **Project creation**: `pman new` creates a project note in `Notes/Projects/` with a chronological `PROJ-XXXX` id and slug.
+2. **Project creation**: `pman new` creates a project note in `Notes/Projects/` with a chronological `PROJ-<n>` id and slug.
 3. **Project tracking**: The registry (`Notes/Projects/_registry.md`) is the authoritative index of active projects.
 4. **Archiving**: `pman archive` moves the project note into `Notes/Archives/Projects/` and updates the registry to `archived`.
 5. **Determinism**: Slugs are unique across both active and archived projects, so the history remains unambiguous.
@@ -64,7 +64,7 @@ pman new "Project Name" --status active
 ```
 
 Creates:
-- `Notes/Projects/proj-XXXX-<slug>/README.md`
+- `Notes/Projects/proj-<n>-<slug>/README.md`
 - Appends to `Notes/Projects/_registry.md`
 
 ### archive
@@ -72,12 +72,12 @@ Creates:
 Archive a project by directory prefix or full name.
 
 ```sh
-pman archive proj-0022
-pman archive proj-0022-some-project
+pman archive proj-22
+pman archive proj-22-some-project
 ```
 
 Moves:
-- `Notes/Projects/proj-0022-*/` -> `Notes/Archives/Projects/proj-0022-*/`
+- `Notes/Projects/proj-22-*/` -> `Notes/Archives/Projects/proj-22-*/`
 - Updates registry status to `archived` with the new path.
 
 ## Options
