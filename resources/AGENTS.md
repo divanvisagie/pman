@@ -1,14 +1,38 @@
+---
+description: Guidelines for AI coding agents working in this repository structure
+---
+
 # Repository Guidelines
 
-## Project Structure & Module Organization
-- Workspace root is `~/src` with a reverse-domain layout (e.g. `com/example/project-name`).
-- `~/src/Notes` is the PARA vault (Projects, Areas, Resources, Archives).
-- Every repo in the reverse-domain tree should have a corresponding Area note.
-- Project notes live in `Notes/Projects/` and may reference Areas for long-running work.
-- Each project is independent with its own README, build, and release flow.
-- Keep shared workflow docs stable and reference them from project notes.
+## Commands
 
-Example layout:
+Prefer standard tooling and keep instructions reproducible.
+
+| Task            | Command Examples                          |
+| --------------- | ----------------------------------------- |
+| Build           | `cargo build`, `make`, `npm run build`    |
+| Test            | `cargo test`, `make test`, `npm test`     |
+| Search          | `rg <pattern>`                            |
+| GitHub          | `gh pr create`, `gh issue list`           |
+| Semantic Search | `csep <query>`                            |
+| Notes/Workflow  | `pman`                                    |
+
+Each project README lists its specific build and test commands.
+
+## Tools
+
+| Tool   | Purpose                                       | Reference                                        |
+| ------ | --------------------------------------------- | ------------------------------------------------ |
+| `pman` | Deterministic Notes operations and workflow   |                                                  |
+| `rg`   | Fast text and file search                     |                                                  |
+| `gh`   | GitHub CLI for repos, PRs, and issues         |                                                  |
+| `csep` | Semantic search over local text               | https://github.com/divanvisagie/csep             |
+| `cgip` | CLI for OpenAI-compatible LLM APIs            | https://github.com/divanvisagie/chat-gipitty     |
+
+## Project Structure
+
+Workspace root is `~/src` with a reverse-domain layout.
+
 ```
 ~/src/
 ├── com/
@@ -17,34 +41,47 @@ Example layout:
 └── Notes/              # PARA vault
 ```
 
-## Build, Test, and Development Commands
-- Each project README lists its build and test commands.
-- Prefer standard tooling (`cargo test`, `make test`, etc.) and keep instructions reproducible.
-- If a command may run for a long time, prompt the user and offer the exact command so they can run it themselves.
+- `~/src/Notes` is the PARA vault (Projects, Areas, Resources, Archives).
+- Every repo in the reverse-domain tree should have a corresponding Area note.
+- Project notes live in `Notes/Projects/` and may reference Areas for long-running work.
+- Each project is independent with its own README, build, and release flow.
+- Keep shared workflow docs stable and reference them from project notes.
 
-## Tools
-- `pman` manages deterministic Notes operations and the workflow conventions.
-- `rg` (ripgrep) is the default for fast text and file search.
-- `gh` (GitHub CLI) is the default for interacting with GitHub repositories.
-- `csep` provides semantic search over local text (https://github.com/divanvisagie/csep).
-- `cgip` is a CLI for interacting with OpenAI-compatible LLM APIs (https://github.com/divanvisagie/chat-gipitty).
+## Coding Style
 
-## Coding Style & Naming Conventions
 - Follow per-project formatter/linter defaults.
 - Keep names descriptive; avoid ambiguous abbreviations.
 - Avoid comments unless they clarify non-obvious logic; a comment introducing a block likely means the block should be a function.
 
-## SDLC (Normal Path)
-- Create a project note before starting work.
-- Capture goals, constraints, and decisions as you go.
-- Keep changes small and test alongside code changes.
+## Testing
 
-## Testing Guidelines
 - Add or update tests with each behavior change.
 - Record test commands run in the project note.
 - Follow TDD when making changes: red -> green -> refactor.
 
-## Commit & Pull Request Guidelines
+## Workflow (SDLC)
+
+- Create a project note before starting work.
+- Capture goals, constraints, and decisions as you go.
+- Keep changes small and test alongside code changes.
+
+## Git & Pull Requests
+
 - Use concise, imperative commit titles with a brief rationale in the body.
 - Mention tests executed when relevant.
+
+## Boundaries
+
+### Always Do
+
+- Prefer standard tooling (`cargo test`, `make test`, etc.).
+- Read the project README before making changes.
+- Keep changes small and focused.
+
+### Ask First
+
+- If a command may run for a long time, prompt the user and offer the exact command so they can run it themselves.
+
+### Never Do
+
 - Never commit or push without explicit user permission.
