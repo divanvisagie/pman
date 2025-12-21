@@ -34,6 +34,7 @@ Example layout:
 ## Coding Style & Naming Conventions
 - Follow per-project formatter/linter defaults.
 - Keep names descriptive; avoid ambiguous abbreviations.
+- Avoid comments unless they clarify non-obvious logic; a comment introducing a block likely means the block should be a function.
 
 ## SDLC (Normal Path)
 - Create a project note before starting work.
@@ -43,6 +44,7 @@ Example layout:
 ## Testing Guidelines
 - Add or update tests with each behavior change.
 - Record test commands run in the project note.
+- Follow TDD when making changes: red → green → refactor.
 
 ## Commit & Pull Request Guidelines
 - Use concise, imperative commit titles with a brief rationale in the body.
