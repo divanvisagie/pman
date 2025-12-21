@@ -1,15 +1,12 @@
 # Repository Guidelines
 
-This file captures the shared workflow conventions for a `~/src` workspace. It is intended to give humans and AI agents the same operating context, regardless of tooling.
-
 ## Project Structure & Module Organization
-- The workspace root is `~/src` (example layout below).
-- Notes live at `~/src/Notes` and always follow PARA (Projects, Areas, Resources, Archives).
-- Projects follow a reverse-domain structure (e.g. `com/example/project-name`).
+- Workspace root is `~/src` with a reverse-domain layout (e.g. `com/example/project-name`).
+- `~/src/Notes` is the PARA vault (Projects, Areas, Resources, Archives).
 - Every repo in the reverse-domain tree should have a corresponding Area note.
 - Project notes live in `Notes/Projects/` and may reference Areas for long-running work.
-- Store shared workflow docs in a stable location and reference them from project notes.
-- Keep each project independent with its own README, build, and release flow.
+- Each project is independent with its own README, build, and release flow.
+- Keep shared workflow docs stable and reference them from project notes.
 
 Example layout:
 ```
@@ -23,9 +20,10 @@ Example layout:
 ## Build, Test, and Development Commands
 - Each project README lists its build and test commands.
 - Prefer standard tooling (`cargo test`, `make test`, etc.) and keep instructions reproducible.
+- If a command may run for a long time, prompt the user and offer the exact command so they can run it themselves.
 
 ## Tools
-- `pman` manages the workflow and deterministic Notes operations.
+- `pman` manages deterministic Notes operations and the workflow conventions.
 - `rg` (ripgrep) is the default for fast text and file search.
 - `gh` (GitHub CLI) is the default for interacting with GitHub repositories.
 - `csep` provides semantic search over local text (https://github.com/divanvisagie/csep).
@@ -44,8 +42,9 @@ Example layout:
 ## Testing Guidelines
 - Add or update tests with each behavior change.
 - Record test commands run in the project note.
-- Follow TDD when making changes: red → green → refactor.
+- Follow TDD when making changes: red -> green -> refactor.
 
 ## Commit & Pull Request Guidelines
 - Use concise, imperative commit titles with a brief rationale in the body.
 - Mention tests executed when relevant.
+- Never commit or push without explicit user permission.
