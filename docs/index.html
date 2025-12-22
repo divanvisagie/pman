@@ -4,40 +4,9 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>pman - Project Workflow Manual</title>
+  <link rel="stylesheet" href="https://divanv.com/css/styles.css">
   <link rel="stylesheet" href="https://divanv.com/css/main.css">
   <script src="https://divanv.com/js/index.js"></script>
-  <style>
-    .pman-container {
-      max-width: 900px;
-      margin: 0 auto;
-      padding: 22px;
-    }
-    .pman-card {
-      border: 1px solid var(--subtitle-color);
-      padding: 20px;
-      margin: 18px 0;
-      line-height: 1.6;
-    }
-    .pman-card h2 {
-      margin-top: 0;
-    }
-    .pman-steps {
-      border-left: 2px solid var(--accent-color);
-      padding-left: 16px;
-      margin: 16px 0 0;
-    }
-    .pman-links {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 12px;
-      margin-top: 12px;
-    }
-    .pman-links a {
-      border: 1px solid var(--subtitle-color);
-      padding: 8px 12px;
-      text-decoration: none;
-    }
-  </style>
 </head>
 <body>
   <nav>
@@ -50,60 +19,126 @@
     </div>
   </nav>
 
-  <div class="pman-container">
-    <div class="pman-card">
-      <h2>Manual First</h2>
+  <div class="content">
+    <div class="post-content">
+      <h2 class="subtitle">Project Workflow Manual</h2>
+
       <p>
         pman is an opinionated framework for a project workflow that maximizes context reuse,
         note management, and collaboration between humans, AI agents, and Unix tooling.
         It draws from the Unix philosophy: small, deterministic commands with predictable
-        outputs and a strict hierarchical file structure. The repository is the source of
-        truth for this workflow, and this page is the entry point.
+        outputs and a strict hierarchical file structure.
       </p>
+
       <p>
         The reason it exists is simple: most workflows fail in the boring parts. Naming,
         structure, and bookkeeping drift over time. pman makes those parts deterministic
         so projects stay searchable, notes stay aligned, and people (or agents) stay in sync.
-        The CLI only automates the deterministic parts; the workflow itself can be executed
-        manually, by an AI agent, or even with notebooks and sticky notes.
       </p>
-      <div class="pman-links">
-        <a href="https://github.com/divanvisagie/pman">README Manual</a>
-        <a href="https://github.com/divanvisagie/pman/blob/master/docs/cli.md">CLI Reference</a>
-        <a href="https://raw.githubusercontent.com/divanvisagie/pman/master/resources/AGENTS.md" download>Download AGENTS.md</a>
-      </div>
-    </div>
 
-    <div class="pman-card">
+      <p>
+        Whether you use the CLI or not, the workflow still stands. It can be executed
+        manually, by an AI agent, or even with notebooks and sticky notes. The value is
+        the workflow, not the tooling.
+      </p>
+
+      <ul>
+        <li>Projects are always created the same way.</li>
+        <li>Notes stay aligned with the codebase.</li>
+        <li>Archives are predictable and searchable.</li>
+        <li>Tooling can rely on a stable filesystem shape.</li>
+        <li>Humans and LLM agents share the same context across the full project lifecycle.</li>
+      </ul>
+
+      <p>
+        <a href="https://github.com/divanvisagie/pman">GitHub README</a> •
+        <a href="https://github.com/divanvisagie/pman/blob/master/docs/cli.md">CLI Reference</a> •
+        <a href="https://raw.githubusercontent.com/divanvisagie/pman/master/resources/AGENTS.md" download>Download AGENTS.md</a>
+      </p>
+
+      <h2>How the Workflow Works</h2>
+
+      <p>The workflow has five core steps:</p>
+
+      <ol>
+        <li><strong>Workspace layout</strong>: <code>~/src</code> holds projects by reverse-domain. Notes live in <code>~/src/Notes</code> using PARA.</li>
+        <li><strong>Project creation</strong>: Create a project note in <code>Notes/Projects/</code> with a chronological <code>PROJ-&lt;n&gt;</code> id and slug (e.g., <code>proj-22-my-feature</code>).</li>
+        <li><strong>Project tracking</strong>: The registry (<code>Notes/Projects/_registry.md</code>) is the authoritative index of active projects.</li>
+        <li><strong>Archiving</strong>: Move completed project notes into <code>Notes/Archives/Projects/</code> and update the registry status to <code>archived</code>.</li>
+        <li><strong>Determinism</strong>: Slugs are unique across both active and archived projects, so history remains unambiguous.</li>
+      </ol>
+
       <h2>Set Up Your Workspace</h2>
+
       <p>
         Create a strict hierarchy under <code>~/src</code>. This becomes the single, shared
         context for both humans and AI agents.
       </p>
-      <div class="pman-steps">
-        <p>1. Create <code>~/src</code> and place your projects in a reverse-domain tree.</p>
-        <p>2. Create <code>~/src/Notes</code> and follow PARA (Projects, Areas, Resources, Archives).</p>
-        <p>3. Copy the AGENTS file into <code>~/src/AGENTS.md</code> as the workflow contract.</p>
-      </div>
-    </div>
 
-    <div class="pman-card">
+<pre><code>~/src/
+├── com/
+│   ├── example/        # Personal projects (your domain)
+│   └── orgname/        # Organization projects
+├── localhost/          # Local-only projects
+└── Notes/
+    ├── Projects/       # Active project notes
+    │   └── _registry.md
+    ├── Areas/          # Long-running areas of responsibility
+    ├── Resources/      # Reference material
+    └── Archives/
+        └── Projects/   # Completed project notes</code></pre>
+
+      <ol>
+        <li>Create <code>~/src</code> and place your projects in a reverse-domain tree.</li>
+        <li>Create <code>~/src/Notes</code> and set up the PARA folders (Projects, Areas, Resources, Archives).</li>
+        <li>Create <code>Notes/Projects/_registry.md</code> to track active and archived projects.</li>
+        <li>Download and place the AGENTS file at <code>~/src/AGENTS.md</code> as the workflow contract.</li>
+        <li>If using Claude, symlink CLAUDE.md to AGENTS.md: <code>ln -s AGENTS.md CLAUDE.md</code></li>
+      </ol>
+
       <h2>Connect Notes Everywhere</h2>
+
       <p>
         Notes are the shared context. Keep them close to every repo by symlinking or cloning.
       </p>
-      <div class="pman-steps">
-        <p>1. Symlink <code>~/src/Notes</code> into each project (recommended), or clone it directly.</p>
-        <p>2. Ensure each repo has an Area note and reference it from project notes.</p>
-        <p>3. Use the registry in <code>Notes/Projects</code> to track active work.</p>
-      </div>
-    </div>
 
-    <div class="pman-card">
-      <h2>Run the Workflow</h2>
+      <ol>
+        <li>Symlink <code>~/src/Notes</code> into each project (recommended), or clone it directly.</li>
+        <li>Ensure each repo has a corresponding Area note in <code>Notes/Areas/</code>.</li>
+        <li>Reference Area notes from project notes for long-running work.</li>
+        <li>Use the registry in <code>Notes/Projects/_registry.md</code> to track active work.</li>
+      </ol>
+
+      <h2>Install the CLI (Optional)</h2>
+
       <p>
-        The workflow can be executed manually or automated with the CLI. The CLI only
-        handles deterministic steps like creating and archiving project notes.
+        The CLI automates deterministic steps like creating and archiving project notes.
+        The workflow can be executed manually without it.
+      </p>
+
+      <p>Install with Cargo:</p>
+
+<pre><code>cargo install --git https://github.com/divanvisagie/pman</code></pre>
+
+      <p>Create a new project:</p>
+
+<pre><code>pman new "My Feature" --status active</code></pre>
+
+      <p>Archive a completed project:</p>
+
+<pre><code>pman archive proj-22</code></pre>
+
+      <h2>Maintain the AGENTS File</h2>
+
+      <p>
+        The <code>AGENTS.md</code> file documents baseline project conventions so the workflow
+        can be reproduced without relying on this specific codebase. Keep it up to date.
+      </p>
+
+      <p>
+        When you notice repeated undesired behavior from an AI agent, ask it to update the
+        file directly (e.g., "please add to the agents file not to do X again"). This keeps
+        humans and AI agents aligned on the same operational context.
       </p>
     </div>
   </div>
