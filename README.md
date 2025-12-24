@@ -46,7 +46,6 @@ The Notes vault follows PARA (Projects, Areas, Resources, Archives). `pman` mana
 ## CLI Reference
 
 The CLI reference lives in [`docs/cli.md`](docs/cli.md), including install and command usage.
-`pman serve` runs a local web UI for browsing the Notes directory with markdown rendering and search.
 
 ## Resources
 
