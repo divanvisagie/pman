@@ -16,6 +16,19 @@ cargo run -- new "Project Name" --status active
 
 ## Commands
 
+### serve
+
+Serve the Notes directory as a local web UI with markdown rendering, search, and browsing.
+
+```sh
+pman serve
+pman serve --notes-dir /path/to/Notes --port 8000
+```
+
+Options:
+- `--notes-dir <path>` overrides the Notes root.
+- `--port <port>` sets the HTTP port (default: `3000`).
+
 ### new
 
 Create a new project note and registry entry.

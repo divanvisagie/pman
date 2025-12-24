@@ -1,17 +1,32 @@
 use anyhow::Result;
 use axum::{
-    extract::{Path, State},
-    http::StatusCode,
-    response::{Html, Redirect, Response, IntoResponse},
+    body::Body,
+    extract::{Path, Query, State},
+    http::{header, StatusCode},
+    response::{Html, IntoResponse, Redirect, Response},
     routing::get,
     Router,
 };
 use comrak::{markdown_to_html, Options};
 use regex::Regex;
+use serde::Deserialize;
 use std::path::PathBuf;
+use std::process::Command;
 use std::sync::Arc;
 
-const MAIN_JS: &str = include_str!("../assets/main.js");
+const STYLES_CSS: &str = include_str!("../assets/styles.css");
+const MAIN_CSS: &str = include_str!("../assets/main.css");
+const BLOG_JS: &str = include_str!("../assets/blog.js");
+const PMAN_JS: &str = include_str!("../assets/main.js");
+const UBUNTU_MONO_REGULAR: &[u8] = include_bytes!("../assets/fonts/UbuntuMono-Regular.ttf");
+const UBUNTU_MONO_ITALIC: &[u8] = include_bytes!("../assets/fonts/UbuntuMono-Italic.ttf");
+const UBUNTU_MONO_BOLD: &[u8] = include_bytes!("../assets/fonts/UbuntuMono-Bold.ttf");
+const UBUNTU_MONO_BOLD_ITALIC: &[u8] = include_bytes!("../assets/fonts/UbuntuMono-BoldItalic.ttf");
+
+#[derive(Deserialize)]
+struct SearchParams {
+    q: Option<String>,
+}
 
 struct AppState {
     notes_dir: PathBuf,
@@ -22,6 +37,8 @@ pub async fn run_server(notes_dir: PathBuf, port: u16) -> Result<()> {
 
     let app = Router::new()
         .route("/", get(handle_root))
+        .route("/search", get(handle_search))
+        .route("/fonts/{*path}", get(handle_fonts))
         .route("/{*path}", get(handle_path))
         .with_state(state);
 
@@ -35,7 +52,46 @@ pub async fn run_server(notes_dir: PathBuf, port: u16) -> Result<()> {
 }
 
 async fn handle_root(State(state): State<Arc<AppState>>) -> Result<Html<String>, StatusCode> {
-    serve_path(&state.notes_dir, &state.notes_dir).await
+    serve_path(&state.notes_dir, &state.notes_dir, "").await
+}
+
+async fn handle_search(
+    State(state): State<Arc<AppState>>,
+    Query(params): Query<SearchParams>,
+) -> Result<Html<String>, StatusCode> {
+    let query = params.q.unwrap_or_default();
+    let notes_canonical = state.notes_dir.canonicalize().map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+    let file_tree = render_file_tree(&notes_canonical, &notes_canonical)?;
+
+    if query.is_empty() {
+        let content = "<p>Enter a search term above.</p>";
+        return Ok(Html(wrap_html("Search", content, &file_tree, &query)));
+    }
+
+    // Run ripgrep
+    let output = Command::new("rg")
+        .args([
+            "--color", "never",
+            "--line-number",
+            "--max-count", "3",
+            "-C", "1",
+            "--type", "md",
+            &query,
+        ])
+        .current_dir(&state.notes_dir)
+        .output()
+        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+
+    let stdout = String::from_utf8_lossy(&output.stdout);
+
+    if stdout.is_empty() {
+        let content = format!("<h1>No results for \"{}\"</h1>", html_escape(&query));
+        return Ok(Html(wrap_html("Search", &content, &file_tree, &query)));
+    }
+
+    // Parse ripgrep output and render results
+    let content = render_search_results(&stdout, &query);
+    Ok(Html(wrap_html(&format!("Search: {}", query), &content, &file_tree, &query)))
 }
 
 async fn handle_path(
@@ -49,13 +105,29 @@ async fn handle_path(
         return Redirect::permanent(&format!("/{path}/")).into_response();
     }
 
-    match serve_path(&state.notes_dir, &full_path).await {
+    match serve_path(&state.notes_dir, &full_path, "").await {
         Ok(html) => html.into_response(),
         Err(status) => status.into_response(),
     }
 }
 
-async fn serve_path(notes_dir: &PathBuf, path: &PathBuf) -> Result<Html<String>, StatusCode> {
+async fn handle_fonts(Path(path): Path<String>) -> Response {
+    let (bytes, content_type) = match path.as_str() {
+        "UbuntuMono-Regular.ttf" => (UBUNTU_MONO_REGULAR, "font/ttf"),
+        "UbuntuMono-Italic.ttf" => (UBUNTU_MONO_ITALIC, "font/ttf"),
+        "UbuntuMono-Bold.ttf" => (UBUNTU_MONO_BOLD, "font/ttf"),
+        "UbuntuMono-BoldItalic.ttf" => (UBUNTU_MONO_BOLD_ITALIC, "font/ttf"),
+        _ => return StatusCode::NOT_FOUND.into_response(),
+    };
+
+    Response::builder()
+        .status(StatusCode::OK)
+        .header(header::CONTENT_TYPE, content_type)
+        .body(Body::from(bytes))
+        .unwrap_or_else(|_| StatusCode::INTERNAL_SERVER_ERROR.into_response())
+}
+
+async fn serve_path(notes_dir: &PathBuf, path: &PathBuf, query: &str) -> Result<Html<String>, StatusCode> {
     // Security: ensure path is within notes_dir
     let canonical = path.canonicalize().map_err(|_| StatusCode::NOT_FOUND)?;
     let notes_canonical = notes_dir.canonicalize().map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
@@ -73,7 +145,7 @@ async fn serve_path(notes_dir: &PathBuf, path: &PathBuf) -> Result<Html<String>,
                 .file_stem()
                 .and_then(|s| s.to_str())
                 .unwrap_or("Note");
-            Ok(Html(wrap_html(title, &html, &file_tree)))
+            Ok(Html(wrap_html(title, &html, &file_tree, query)))
         } else {
             Err(StatusCode::NOT_FOUND)
         }
@@ -85,21 +157,79 @@ async fn serve_path(notes_dir: &PathBuf, path: &PathBuf) -> Result<Html<String>,
         if readme.exists() {
             let content = std::fs::read_to_string(&readme).map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
             let html = render_markdown(&content);
-            Ok(Html(wrap_html("Notes", &html, &file_tree)))
+            Ok(Html(wrap_html("Notes", &html, &file_tree, query)))
         } else if index.exists() {
             let content = std::fs::read_to_string(&index).map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
             let html = render_markdown(&content);
-            Ok(Html(wrap_html("Notes", &html, &file_tree)))
+            Ok(Html(wrap_html("Notes", &html, &file_tree, query)))
         } else {
             let html = render_directory(&canonical, notes_dir)?;
             let dir_name = canonical
                 .file_name()
                 .and_then(|s| s.to_str())
                 .unwrap_or("Notes");
-            Ok(Html(wrap_html(dir_name, &html, &file_tree)))
+            Ok(Html(wrap_html(dir_name, &html, &file_tree, query)))
         }
     } else {
         Err(StatusCode::NOT_FOUND)
+    }
+}
+
+fn html_escape(s: &str) -> String {
+    s.replace('&', "&amp;")
+        .replace('<', "&lt;")
+        .replace('>', "&gt;")
+        .replace('"', "&quot;")
+}
+
+fn render_search_results(output: &str, query: &str) -> String {
+    let mut html = format!("<h1>Search results for \"{}\"</h1>\n", html_escape(query));
+    let mut current_file: Option<String> = None;
+    let mut lines_buffer: Vec<String> = Vec::new();
+
+    let flush_file = |html: &mut String, file: &Option<String>, lines: &mut Vec<String>| {
+        if let Some(f) = file {
+            if !lines.is_empty() {
+                html.push_str(&format!(
+                    "<div class=\"search-result\"><a href=\"/{}\">{}</a><pre>{}</pre></div>\n",
+                    f, f, lines.join("\n")
+                ));
+                lines.clear();
+            }
+        }
+    };
+
+    for line in output.lines() {
+        // ripgrep output format: filename:linenum:content or filename-linenum-content (context)
+        if let Some((file_part, rest)) = line.split_once(':') {
+            if let Some((_, content)) = rest.split_once(':') {
+                // Check if this is a new file
+                if current_file.as_deref() != Some(file_part) {
+                    flush_file(&mut html, &current_file, &mut lines_buffer);
+                    current_file = Some(file_part.to_string());
+                }
+                // Highlight the query in the content
+                let escaped = html_escape(content);
+                let highlighted = escaped.replace(
+                    &html_escape(query),
+                    &format!("<mark>{}</mark>", html_escape(query))
+                );
+                lines_buffer.push(highlighted);
+            }
+        } else if line.starts_with("--") {
+            // Separator between matches in same file
+            if !lines_buffer.is_empty() {
+                lines_buffer.push("...".to_string());
+            }
+        }
+    }
+
+    flush_file(&mut html, &current_file, &mut lines_buffer);
+
+    if html.contains("search-result") {
+        html
+    } else {
+        format!("<h1>No results for \"{}\"</h1>", html_escape(query))
     }
 }
 
@@ -237,7 +367,7 @@ fn render_directory(dir: &PathBuf, notes_dir: &PathBuf) -> Result<String, Status
     Ok(html)
 }
 
-fn wrap_html(title: &str, content: &str, file_tree: &str) -> String {
+fn wrap_html(title: &str, content: &str, file_tree: &str, search_query: &str) -> String {
     format!(
         r#"<!DOCTYPE html>
 <html lang="en">
@@ -245,19 +375,63 @@ fn wrap_html(title: &str, content: &str, file_tree: &str) -> String {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{title} - pman</title>
-    <link rel="stylesheet" href="https://divanv.com/css/main.css">
+    <style>{styles_css}</style>
+    <style>{main_css}</style>
     <style>
         body {{
             display: flex;
+            flex-direction: column;
             margin: 0;
             min-height: 100vh;
-            position: relative;
+        }}
+        .navbar {{
+            display: flex;
+            align-items: center;
+            padding: 0 1.5rem;
+            height: 50px;
+            background: var(--background-color);
+            border-bottom: 1px solid var(--subtitle-color);
+        }}
+        .navbar .search-form {{
+            display: flex;
+            flex: 1;
+            max-width: 500px;
+            gap: 0.5rem;
+        }}
+        .navbar .search-form input {{
+            flex: 1;
+            padding: 0.4rem 0.75rem;
+            font-family: inherit;
+            font-size: inherit;
+            background: var(--code-background);
+            color: var(--text-color);
+            border: 1px solid var(--subtitle-color);
+            outline: none;
+        }}
+        .navbar .search-form input:focus {{
+            border-color: var(--accent-color);
+        }}
+        .navbar .search-form button {{
+            padding: 0.4rem 1rem;
+            font-family: inherit;
+            font-size: inherit;
+            background: var(--subtitle-color);
+            color: var(--background-color);
+            border: 1px solid var(--subtitle-color);
+            cursor: pointer;
+        }}
+        .navbar .search-form button:hover {{
+            background: var(--accent-color);
+            border-color: var(--accent-color);
+        }}
+        .content-wrapper {{
+            display: flex;
+            flex: 1;
+            overflow: hidden;
         }}
         .sidebar {{
             display: flex;
-            position: sticky;
-            top: 0;
-            height: 100vh;
+            height: calc(100vh - 50px);
         }}
         .file-tree {{
             width: 280px;
@@ -265,7 +439,8 @@ fn wrap_html(title: &str, content: &str, file_tree: &str) -> String {
             max-width: 600px;
             padding: 1rem 1.5rem;
             overflow-y: auto;
-            height: 100vh;
+            height: 100%;
+            box-sizing: border-box;
             background: var(--background-color);
         }}
         .resize-handle {{
@@ -331,6 +506,8 @@ fn wrap_html(title: &str, content: &str, file_tree: &str) -> String {
             padding: 2rem 2.5rem;
             max-width: 800px;
             overflow-y: auto;
+            height: calc(100vh - 50px);
+            box-sizing: border-box;
         }}
         main h1:first-child {{
             margin-top: 0;
@@ -348,6 +525,27 @@ fn wrap_html(title: &str, content: &str, file_tree: &str) -> String {
         }}
         .file-listing a:hover {{
             color: var(--accent-color);
+        }}
+        .search-result {{
+            margin-bottom: 1.5rem;
+        }}
+        .search-result a {{
+            color: var(--accent-color);
+            text-decoration: none;
+            font-weight: bold;
+        }}
+        .search-result a:hover {{
+            text-decoration: underline;
+        }}
+        .search-result pre {{
+            margin-top: 0.5rem;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }}
+        mark {{
+            background: var(--accent-color);
+            color: var(--background-color);
+            padding: 0 0.2rem;
         }}
         table {{
             border-collapse: collapse;
@@ -380,19 +578,32 @@ fn wrap_html(title: &str, content: &str, file_tree: &str) -> String {
     </style>
 </head>
 <body>
-    <div class="sidebar">
-        {file_tree}
-        <div class="resize-handle"></div>
+    <nav class="navbar">
+        <form class="search-form" action="/search" method="get">
+            <input type="text" name="q" placeholder="Search notes..." value="{search_query}" />
+            <button type="submit">Search</button>
+        </form>
+    </nav>
+    <div class="content-wrapper">
+        <div class="sidebar">
+            {file_tree}
+            <div class="resize-handle"></div>
+        </div>
+        <main>
+            {content}
+        </main>
     </div>
-    <main>
-        {content}
-    </main>
-    <script>{js}</script>
+    <script>{blog_js}</script>
+    <script>{pman_js}</script>
 </body>
 </html>"#,
         title = title,
         content = content,
         file_tree = file_tree,
-        js = MAIN_JS
+        search_query = html_escape(search_query),
+        styles_css = STYLES_CSS,
+        main_css = MAIN_CSS,
+        blog_js = BLOG_JS,
+        pman_js = PMAN_JS
     )
 }
