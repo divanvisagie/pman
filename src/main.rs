@@ -2,7 +2,7 @@ use anyhow::Result;
 use clap::{Parser, Subcommand};
 use std::path::PathBuf;
 
-use pman::{archive_project, create_project, resolve_notes_dir, NotesPaths};
+use pman::{archive_project, create_project, resolve_notes_dir, serve, NotesPaths};
 
 #[derive(Parser)]
 #[command(name = "pman", version, about = "Notes project manager")]
@@ -35,9 +35,19 @@ enum Commands {
         #[arg(long)]
         notes_dir: Option<PathBuf>,
     },
+    /// Serve Notes directory as a web interface
+    Serve {
+        /// Port to listen on
+        #[arg(long, default_value = "8989")]
+        port: u16,
+        /// Override Notes root directory
+        #[arg(long)]
+        notes_dir: Option<PathBuf>,
+    },
 }
 
-fn main() -> Result<()> {
+#[tokio::main]
+async fn main() -> Result<()> {
     let cli = Cli::parse();
 
     match cli.command {
@@ -60,6 +70,10 @@ fn main() -> Result<()> {
             let paths = NotesPaths::from_root(root);
             let dest = archive_project(&paths, &project)?;
             println!("Archived {}", dest.display());
+        }
+        Commands::Serve { port, notes_dir } => {
+            let root = resolve_notes_dir(notes_dir)?;
+            serve::run_server(root, port).await?;
         }
     }
 

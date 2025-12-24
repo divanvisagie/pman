@@ -6,6 +6,8 @@ use std::fs::OpenOptions;
 use std::io::Write;
 use std::path::{Path, PathBuf};
 
+pub mod serve;
+
 const REGISTRY_HEADER: &str = "# Project Registry\n\nFlat list of project notes. IDs are chronological and unique across all projects.\n\n| ID | Name | Status | Created | Note |\n| --- | --- | --- | --- | --- |\n";
 
 #[derive(Debug, Clone)]
@@ -33,6 +35,14 @@ impl NotesPaths {
 pub fn resolve_notes_dir(notes_dir: Option<PathBuf>) -> Result<PathBuf> {
     if let Some(path) = notes_dir {
         return Ok(path);
+    }
+
+    // Default to ~/Notes
+    if let Some(home) = std::env::var_os("HOME") {
+        let default_notes = PathBuf::from(home).join("Notes");
+        if default_notes.exists() {
+            return Ok(default_notes);
+        }
     }
 
     if let Some(path) = find_notes_root_from_path(&std::env::current_exe()?) {
