@@ -2,6 +2,12 @@
 
 This file configures Claude Code for this workspace. Place it at the root of `~/src` or in individual projects.
 
+## How We Work Together
+
+Most file changes happen through this chat. Instead of editing files or running commands directly, describe what you want and let Claude handle execution. Claude is configured with the workflow rules below, so it enforces conventions automatically: creating project notes before coding, updating the registry, following commit formats.
+
+You can still edit files directly—sketch pseudocode in vim, tweak a config by hand, or use whatever tool fits the moment. When you do, tell Claude to look at what you changed so it stays in sync. Claude is one tool in the toolbox, not the entire toolbox.
+
 ## Skills
 
 Claude Code skills extend capabilities for specific workflows. Install from the pman repo:
@@ -110,3 +116,7 @@ Code changes only begin after the plan is done. When asked to make a change, fir
 ### Never Do
 
 - Never commit or push without explicit user permission.
+
+## Keeping This File Up to Date
+
+This file is the contract between you and Claude. When Claude does something you don't want, ask it to update this file directly: "Please add to CLAUDE.md not to do X again." This way, the lesson persists across sessions.
