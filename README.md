@@ -4,11 +4,17 @@
 
 LLMs are great at generating code and iterating through implementation problems, but they struggle with context. Context is the hardest part of software development. `pman` flips the dynamic: you become the context manager, while Claude focuses on code, frameworks, and documentation. Each plays to their strength.
 
+The key insight is that most file changes happen through the agent chat as an intermediary. Instead of editing files or running commands directly, you work through Claude. Because Claude is configured with the workflow rules via `CLAUDE.md` and skills, it enforces conventions automatically: creating project notes before coding, updating the registry, following commit formats. You describe intent; Claude handles execution within the established structure.
+
+This doesn't mean you can't edit files directly. Sketch out pseudocode in vim, tweak a config by hand, or use whatever tool fits the moment. The workflow is interactive: when you make changes outside the chat, tell Claude to look at what you did. Claude, your editor, and any other tool are tools in the toolbox—not the entire toolbox. We don't do Emacs here.
+
 Unlike throwaway planning, `pman` treats plans as persistent artifacts, like source files, but managed in a separate, centralized Notes repository. By documenting every change, you build a reference set for future work. Changed service A and now service B needs updating? Pull in context from A's project note. The Notes vault becomes your cross-project memory.
 
 Initializing Claude at the `~/src` root also lets you reference other repositories directly. Building an API client? Point Claude at the API source in a sibling repo and have it implement the client. The shared workspace means cross-repo work is natural.
 
 Whether you use the `pman` tool or not, the workflow still stands. It can be executed manually, by Claude, or by the CLI itself. The value is the workflow, not the tooling.
+
+**Agent compatibility**: This workflow is developed and tested exclusively with Claude Code. It may work with other AI coding agents, but I only test with Claude and have found it to be the most effective for this style of work. The workflow, prompts, and tooling are optimized for Claude's capabilities.
 
 ## What this gives you
 
