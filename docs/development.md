@@ -15,4 +15,4 @@ cargo test
 ## Notes
 
 - Keep changes small and predictable.
-- Follow the workflow guidance in the README and AGENTS template.
+- Follow the workflow guidance in the README and CLAUDE.md template.

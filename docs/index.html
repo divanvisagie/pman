@@ -6,7 +6,6 @@
   <title>pman - Project Workflow Manual</title>
   <link rel="stylesheet" href="https://divanv.com/css/styles.css">
   <link rel="stylesheet" href="https://divanv.com/css/main.css">
-  <script src="https://divanv.com/js/index.js" defer></script>
 </head>
 <body>
   <nav>
@@ -24,55 +23,104 @@
       <h2 class="subtitle">Project Workflow Manual</h2>
 
       <p>
-        pman is an opinionated framework for a project workflow that maximizes context reuse,
-        note management, and collaboration between humans, AI agents, and Unix tooling.
-        It draws from the Unix philosophy: small, deterministic commands with predictable
-        outputs and a strict hierarchical file structure.
+        pman is an opinionated workflow for agentic programming with Claude Code.
       </p>
 
       <p>
-        The reason it exists is simple: most workflows fail in the boring parts. Naming,
-        structure, and bookkeeping drift over time. pman makes those parts deterministic
-        so projects stay searchable, notes stay aligned, and people (or agents) stay in sync.
+        LLMs are great at generating code and iterating through implementation problems,
+        but they struggle with context. Context is the hardest part of software development.
+        pman flips the dynamic: you become the context manager, while Claude focuses on
+        code, frameworks, and documentation. Each plays to their strength.
       </p>
 
       <p>
-        Whether you use the CLI or not, the workflow still stands. It can be executed
-        manually, by an AI agent, or even with notebooks and sticky notes. The value is
-        the workflow, not the tooling.
+        Unlike throwaway planning, pman treats plans as persistent artifacts, like source files,
+        but managed in a separate, centralized Notes repository. By documenting every change,
+        you build a reference set for future work. Changed service A and now service B needs
+        updating? Pull in context from A's project note. The Notes vault becomes your
+        cross-project memory.
       </p>
 
-      <ul>
-        <li>Projects are always created the same way.</li>
-        <li>Notes stay aligned with the codebase.</li>
-        <li>Archives are predictable and searchable.</li>
-        <li>Tooling can rely on a stable filesystem shape.</li>
-        <li>Humans and LLM agents share the same context across the full project lifecycle.</li>
-      </ul>
+      <p>
+        Initializing Claude at the <code>~/src</code> root also lets you reference other
+        repositories directly. Building an API client? Point Claude at the API source in a
+        sibling repo and have it implement the client. The shared workspace means cross-repo
+        work is natural.
+      </p>
 
       <p>
         <a href="https://github.com/divanvisagie/pman">GitHub README</a> •
         <a href="https://github.com/divanvisagie/pman/blob/master/docs/cli.md">CLI Reference</a> •
-        <a href="https://raw.githubusercontent.com/divanvisagie/pman/master/resources/AGENTS.md" download>Download AGENTS.md</a>
+        <a href="https://raw.githubusercontent.com/divanvisagie/pman/master/resources/CLAUDE.md" download>Download CLAUDE.md</a>
       </p>
 
-      <h2>How the Workflow Works</h2>
-
-      <p>The workflow has five core steps:</p>
-
-      <ol>
-        <li><strong>Workspace layout</strong>: <code>~/src</code> holds projects by reverse-domain. Notes live in <code>~/src/Notes</code> using PARA.</li>
-        <li><strong>Project creation</strong>: Create a project note in <code>Notes/Projects/</code> with a chronological <code>PROJ-&lt;n&gt;</code> id and slug (e.g., <code>proj-22-my-feature</code>).</li>
-        <li><strong>Project tracking</strong>: The registry (<code>Notes/Projects/_registry.md</code>) is the authoritative index of active projects.</li>
-        <li><strong>Archiving</strong>: Move completed project notes into <code>Notes/Archives/Projects/</code> and update the registry status to <code>archived</code>.</li>
-        <li><strong>Determinism</strong>: Slugs are unique across both active and archived projects, so history remains unambiguous.</li>
-      </ol>
-
-      <h2>Set Up Your Workspace</h2>
+      <h2>The Core Idea</h2>
 
       <p>
-        Create a strict hierarchy under <code>~/src</code>. This becomes the single, shared
-        context for both humans and AI agents.
+        <strong>Plan before you code.</strong> Every change starts in a project note, not in the codebase.
+        You and Claude collaborate on the plan in writing. Only after the plan is complete do you start coding.
+      </p>
+
+<pre><code class="language-mermaid">
+flowchart LR
+    subgraph Workflow
+        A[Create Project Note] --> B[Plan with Claude]
+        B -->|Update| N[(Project Note)]
+        N --> C[Execute Code]
+        C --> D[Record Outcomes]
+        D -->|Update| N
+    end
+
+    D --> E{Done?}
+    E -->|No| B
+    E -->|Yes| F[Archive]
+</code></pre>
+
+      <p>The workflow has four steps:</p>
+
+      <ol>
+        <li><strong>Create a project note</strong>: Every change gets a project note. Use <code>pman new</code> or create one manually.</li>
+        <li><strong>Plan collaboratively</strong>: Work with Claude to develop the plan <em>in the project note</em>. Goals, constraints, approach: all written down. The plan lives in the note, not in chat history.</li>
+        <li><strong>Execute</strong>: Once the plan is complete, start writing code. The plan is the spec; follow it.</li>
+        <li><strong>Record outcomes</strong>: Update the project note with what worked, what changed, and any follow-up tasks.</li>
+      </ol>
+
+      <h2>Example Session</h2>
+
+      <p>Here's how a typical session looks:</p>
+
+<pre><code class="language-mermaid">
+sequenceDiagram
+    actor User
+    participant Claude
+    participant PN as Project Note
+    participant Code as Codebase
+
+    User->>Claude: I want to add feature X
+    Claude->>PN: Create project note
+    User->>Claude: Let's plan this
+    Claude->>PN: Write goals and approach
+    User->>Claude: What about edge cases?
+    Claude->>PN: Update plan
+    User->>Claude: Looks good, build it
+    Claude->>Code: Implement changes
+    Claude->>PN: Record outcomes
+    User->>Claude: Done, archive it
+    Claude->>PN: Move to Archives
+</code></pre>
+
+      <p>
+        Notice how Claude writes to the project note throughout. It does this based on
+        the instructions in CLAUDE.md, but you may also want to explicitly tell it to
+        write something down during your chat. The note becomes the single source of
+        truth for <em>why</em> a change was made, while git records <em>what</em> changed.
+      </p>
+
+      <h2>Workspace Structure</h2>
+
+      <p>
+        pman assumes a specific filesystem layout. This structure gives you and Claude
+        a shared, predictable context.
       </p>
 
 <pre><code>~/src/
@@ -83,40 +131,35 @@
 └── Notes/
     ├── Projects/       # Active project notes
     │   └── _registry.md
-    ├── Areas/          # Long-running areas of responsibility
+    ├── Areas/          # Long-running responsibilities
     ├── Resources/      # Reference material
     └── Archives/
         └── Projects/   # Completed project notes</code></pre>
 
-      <ol>
-        <li>Create <code>~/src</code> and place your projects in a reverse-domain tree.</li>
-        <li>Create <code>~/src/Notes</code> and set up the PARA folders (Projects, Areas, Resources, Archives).</li>
-        <li>Create <code>Notes/Projects/_registry.md</code> to track active and archived projects.</li>
-        <li>Download and place the AGENTS file at <code>~/src/AGENTS.md</code> as the workflow contract.</li>
-        <li>If using Claude, symlink CLAUDE.md to AGENTS.md: <code>ln -s AGENTS.md CLAUDE.md</code></li>
-      </ol>
+      <p>Key concepts:</p>
 
-      <h2>Connect Notes Everywhere</h2>
+      <ul>
+        <li><strong>Reverse-domain layout</strong>: Projects live under <code>~/src/com/yourorg/project</code>. This prevents naming collisions and makes ownership clear.</li>
+        <li><strong><a href="https://fortelabs.com/blog/para/">PARA</a> notes</strong>: Notes are organized into Projects, Areas, Resources, and Archives. Project notes track time-bound work; Areas track ongoing responsibilities.</li>
+        <li><strong>Registry</strong>: <code>Notes/Projects/_registry.md</code> is the authoritative index of all projects, active and archived.</li>
+        <li><strong>Deterministic slugs</strong>: Each project gets a unique slug like <code>proj-22-my-feature</code>. Slugs make projects easy to reference in conversation and across notes. If you use a ticketing system (Jira, Linear, GitHub Issues), modify your CLAUDE.md to use that format (e.g., <code>PROJ-123-my-feature</code>) so project notes align with your existing workflow.</li>
+      </ul>
 
-      <p>
-        Notes are the shared context. Keep them close to every repo by symlinking or cloning.
-      </p>
+      <h2>Getting Started</h2>
 
       <ol>
-        <li>Symlink <code>~/src/Notes</code> into each project (recommended), or clone it directly.</li>
-        <li>Ensure each repo has a corresponding Area note in <code>Notes/Areas/</code>.</li>
-        <li>Reference Area notes from project notes for long-running work.</li>
-        <li>Use the registry in <code>Notes/Projects/_registry.md</code> to track active work.</li>
+        <li>Create <code>~/src</code> and organize your projects in a reverse-domain tree.</li>
+        <li>Create <code>~/src/Notes</code> with PARA folders (Projects, Areas, Resources, Archives).</li>
+        <li>Create <code>Notes/Projects/_registry.md</code> to track projects.</li>
+        <li>Download <a href="https://raw.githubusercontent.com/divanvisagie/pman/master/resources/CLAUDE.md">CLAUDE.md</a> and place it at <code>~/src/CLAUDE.md</code>.</li>
       </ol>
 
       <h2>Install the CLI (Optional)</h2>
 
       <p>
-        The CLI automates deterministic steps like creating and archiving project notes.
-        The workflow can be executed manually without it.
+        The CLI automates creating and archiving project notes.
+        The workflow works without it; you can manage notes manually.
       </p>
-
-      <p>Install with Cargo:</p>
 
 <pre><code>cargo install --git https://github.com/divanvisagie/pman</code></pre>
 
@@ -128,17 +171,38 @@
 
 <pre><code>pman archive proj-22</code></pre>
 
-      <h2>Maintain the AGENTS File</h2>
+      <h2>Claude Code Skills</h2>
 
       <p>
-        The <code>AGENTS.md</code> file documents baseline project conventions so the workflow
-        can be reproduced without relying on this specific codebase. Keep it up to date.
+        Skills teach Claude about specific workflows. This repo includes two skills
+        in <code>resources/skills/</code>:
+      </p>
+
+      <ul>
+        <li><strong>para-notes</strong>: PARA note management and SDLC tracking</li>
+        <li><strong>project-structure</strong>: Reverse-domain layout and project creation</li>
+      </ul>
+
+      <p>Install by copying to your skills directory:</p>
+
+<pre><code>cp -r resources/skills/* ~/.claude/skills/</code></pre>
+
+      <h2>Keeping Things in Sync</h2>
+
+      <p>
+        The <code>CLAUDE.md</code> file is the contract between you and Claude. It defines
+        commands, tools, structure, and workflow rules. Keep it up to date.
       </p>
 
       <p>
-        When you notice repeated undesired behavior from an AI agent, ask it to update the
-        file directly (e.g., "please add to the agents file not to do X again"). This keeps
-        humans and AI agents aligned on the same operational context.
+        When Claude does something you don't like, ask it to update CLAUDE.md directly:
+        <em>"Please add to CLAUDE.md not to do X again."</em> This way, the lesson persists
+        across sessions.
+      </p>
+
+      <p>
+        Similarly, keep your project notes current. They're the shared context that makes
+        collaboration with Claude effective.
       </p>
     </div>
   </div>
@@ -153,5 +217,43 @@
     <span><a href="/fretboard">Fretboard</a></span> &bull;
     <span><a href="/weather">Weather</a></span>
   </footer>
+
+  <script src="mermaid.min.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      function monoColor() {
+        return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
+          ? '#ffffff' : '#000000';
+      }
+      function fontFamily() {
+        return window.getComputedStyle(document.body).fontFamily;
+      }
+
+      document.querySelectorAll('pre > code.language-mermaid').forEach(function(code) {
+        var container = document.createElement('div');
+        container.className = 'mermaid';
+        container.textContent = code.textContent;
+        code.parentElement.replaceWith(container);
+      });
+
+      mermaid.initialize({
+        startOnLoad: false,
+        theme: 'base',
+        themeVariables: {
+          fontFamily: fontFamily(),
+          primaryBorderColor: monoColor(),
+          lineColor: monoColor(),
+          primaryTextColor: monoColor(),
+          primaryColor: 'transparent',
+          secondaryColor: 'transparent',
+          tertiaryColor: 'transparent',
+          clusterBkg: 'transparent',
+          clusterBorder: monoColor(),
+          edgeLabelBackground: 'transparent'
+        }
+      });
+      mermaid.run();
+    });
+  </script>
 </body>
 </html>

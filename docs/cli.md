@@ -2,6 +2,12 @@
 
 This document covers the CLI behavior. The workflow manual lives in the README.
 
+## Core concepts
+
+- A **project** is a time-bound effort (feature, bugfix, refactor)—not a repository. A repo may have many projects; a project may touch multiple repos.
+- The **registry** (`Notes/Projects/_registry.md`) is the authoritative index of all active and archived projects.
+- Every change belongs to a project. The workflow: create a project note → plan collaboratively with the model → execute code changes once the plan is complete.
+
 ## Install
 
 ```sh
@@ -27,7 +33,7 @@ pman new "Runes Notes" --area religion
 
 Creates:
 - `Notes/Projects/proj-<n>-<slug>/README.md`
-- Appends to `Notes/Projects/_registry.md`
+- Appends an entry to the registry (`Notes/Projects/_registry.md`)
 
 Options:
 - `--status <status>` sets the registry status (default: `active`).
@@ -44,8 +50,8 @@ pman archive proj-22-some-project
 ```
 
 Moves:
-- `Notes/Projects/proj-22-*/` -> `Notes/Archives/Projects/proj-22-*/`
-- Updates registry status to `archived` with the new path.
+- `Notes/Projects/proj-22-*/` → `Notes/Archives/Projects/proj-22-*/`
+- Updates the registry (`Notes/Projects/_registry.md`) status to `archived` with the new path.
 
 Options:
 - `--notes-dir <path>` overrides the Notes root.
