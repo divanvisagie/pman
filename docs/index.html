@@ -47,22 +47,15 @@
         tweak a config by hand, or use whatever tool fits the moment. The workflow is
         interactive: when you make changes outside the chat, tell Claude to look at what
         you did. Claude, your editor, and any other tool are tools in the toolbox—not the
-        entire toolbox. We don't do Emacs here.
+        entire toolbox.
       </p>
 
       <p>
         Unlike throwaway planning, pman treats plans as persistent artifacts, like source files,
-        but managed in a separate, centralized Notes repository. By documenting every change,
+        but managed in a separate, centralized Notes directory. By documenting every change,
         you build a reference set for future work. Changed service A and now service B needs
         updating? Pull in context from A's project note. The Notes vault becomes your
-        cross-project memory.
-      </p>
-
-      <p>
-        Initializing Claude at the <code>~/src</code> root also lets you reference other
-        repositories directly. Building an API client? Point Claude at the API source in a
-        sibling repo and have it implement the client. The shared workspace means cross-repo
-        work is natural.
+        cross-system memory.
       </p>
 
       <p>
@@ -76,6 +69,34 @@
         <a href="https://github.com/divanvisagie/pman">GitHub README</a> •
         <a href="https://github.com/divanvisagie/pman/blob/master/docs/cli.md">CLI Reference</a> •
         <a href="https://raw.githubusercontent.com/divanvisagie/pman/master/resources/CLAUDE.md" download>Download CLAUDE.md</a>
+      </p>
+
+      <h2>Quick Start</h2>
+
+      <ol>
+        <li>Create a workspace directory (e.g., <code>~/src</code>, <code>~/code</code>, whatever you prefer)</li>
+        <li>Start Claude Code in that directory</li>
+        <li>Tell Claude: <em>"set up <a href="INSTALL.md">https://divanv.com/pman/INSTALL.md</a>"</em></li>
+      </ol>
+
+      <p>
+        Claude will read the install instructions and configure your workspace automatically.
+        The setup works in any directory—it becomes your workspace root.
+      </p>
+
+      <h2>Glossary</h2>
+
+      <table>
+        <tr><th>Term</th><th>Meaning</th></tr>
+        <tr><td>Project</td><td>Time-bound effort to achieve an outcome (feature, bugfix, refactor)</td></tr>
+        <tr><td>System</td><td>What the project changes—may span one or more repositories</td></tr>
+        <tr><td>Repository</td><td>A git repo containing code</td></tr>
+      </table>
+
+      <p>
+        A <strong>project</strong> changes a <strong>system</strong>.
+        A <strong>system</strong> is made of one or more <strong>repositories</strong>.
+        Projects live in <code>Notes/Projects/</code>, repositories live in the workspace.
       </p>
 
       <h2>The Core Idea</h2>
@@ -100,13 +121,14 @@ flowchart LR
     E -->|Yes| F[Archive]
 </code></pre>
 
-      <p>The workflow has four steps:</p>
+      <p>The workflow has five steps:</p>
 
       <ol>
-        <li><strong>Create a project note</strong>: Every change gets a project note. Use <code>pman new</code> or create one manually.</li>
+        <li><strong>Create a project note</strong>: <code>pman new</code> creates a project note in <code>Notes/Projects/</code> with a chronological <code>PROJ-&lt;n&gt;</code> id and slug.</li>
         <li><strong>Plan collaboratively</strong>: Work with Claude to develop the plan <em>in the project note</em>. Goals, constraints, approach: all written down. The plan lives in the note, not in chat history.</li>
         <li><strong>Execute</strong>: Once the plan is complete, start writing code. The plan is the spec; follow it.</li>
         <li><strong>Record outcomes</strong>: Update the project note with what worked, what changed, and any follow-up tasks.</li>
+        <li><strong>Archive</strong>: <code>pman archive</code> moves the project note to <code>Notes/Archives/Projects/</code> and updates the registry.</li>
       </ol>
 
       <h2>Example Session</h2>
@@ -118,7 +140,7 @@ sequenceDiagram
     actor User
     participant Claude
     participant PN as Project Note
-    participant Code as Codebase
+    participant Code as System
 
     User->>Claude: I want to add feature X
     Claude->>PN: Create project note
@@ -143,47 +165,46 @@ sequenceDiagram
       <h2>Workspace Structure</h2>
 
       <p>
-        pman assumes a specific filesystem layout. This structure gives you and Claude
-        a shared, predictable context.
+        pman expects a Notes directory following <a href="https://fortelabs.com/blog/para/">PARA</a>
+        (Projects, Areas, Resources, Archives):
       </p>
 
-<pre><code>~/src/
-├── com/
-│   ├── example/        # Personal projects (your domain)
-│   └── orgname/        # Organization projects
-├── localhost/          # Local-only projects
-└── Notes/
-    ├── Projects/       # Active project notes
-    │   └── _registry.md
-    ├── Areas/          # Long-running responsibilities
-    ├── Resources/      # Reference material
-    └── Archives/
-        └── Projects/   # Completed project notes</code></pre>
+<pre><code>Notes/
+  Projects/
+    _registry.md
+  Areas/
+  Resources/
+  Archives/
+    Projects/</code></pre>
+
+      <p>
+        The workspace structure for your repositories is up to you—document it in your
+        workspace <code>README.md</code>.
+      </p>
 
       <p>Key concepts:</p>
 
       <ul>
-        <li><strong>Reverse-domain layout</strong>: Projects live under <code>~/src/com/yourorg/project</code>. This prevents naming collisions and makes ownership clear.</li>
-        <li><strong><a href="https://fortelabs.com/blog/para/">PARA</a> notes</strong>: Notes are organized into Projects, Areas, Resources, and Archives. Project notes track time-bound work; Areas track ongoing responsibilities.</li>
         <li><strong>Registry</strong>: <code>Notes/Projects/_registry.md</code> is the authoritative index of all projects, active and archived.</li>
-        <li><strong>Deterministic slugs</strong>: Each project gets a unique slug like <code>proj-22-my-feature</code>. Slugs make projects easy to reference in conversation and across notes. If you use a ticketing system (Jira, Linear, GitHub Issues), modify your CLAUDE.md to use that format (e.g., <code>PROJ-123-my-feature</code>) so project notes align with your existing workflow.</li>
+        <li><strong>Deterministic slugs</strong>: Each project gets a unique slug like <code>proj-22-my-feature</code>. Slugs make projects easy to reference in conversation and across notes.</li>
       </ul>
 
-      <h2>Getting Started</h2>
+      <h2>Manual Setup</h2>
+
+      <p>If you prefer to set up manually instead of using Claude:</p>
 
       <ol>
-        <li>Create <code>~/src</code> and organize your projects in a reverse-domain tree.</li>
-        <li>Create <code>~/src/Notes</code> with PARA folders (Projects, Areas, Resources, Archives).</li>
+        <li>Create a workspace directory for your projects.</li>
+        <li>Create a <code>Notes</code> directory with PARA folders (Projects, Areas, Resources, Archives).</li>
         <li>Create <code>Notes/Projects/_registry.md</code> to track projects.</li>
-        <li>Download <a href="https://raw.githubusercontent.com/divanvisagie/pman/master/resources/CLAUDE.md">CLAUDE.md</a> and place it at <code>~/src/CLAUDE.md</code>.</li>
+        <li>Download <a href="https://raw.githubusercontent.com/divanvisagie/pman/master/resources/CLAUDE.md">CLAUDE.md</a> and place it at your workspace root.</li>
+        <li>Copy skills to <code>./.claude/skills/</code>.</li>
+        <li>Create a <code>README.md</code> documenting your workspace layout and custom tools.</li>
       </ol>
 
-      <h2>Install the CLI (Optional)</h2>
+      <p>See <a href="INSTALL.md">INSTALL.md</a> for detailed instructions and file contents.</p>
 
-      <p>
-        The CLI automates creating and archiving project notes.
-        The workflow works without it; you can manage notes manually.
-      </p>
+      <h2>Install the CLI</h2>
 
 <pre><code>cargo install --git https://github.com/divanvisagie/pman</code></pre>
 
@@ -195,6 +216,32 @@ sequenceDiagram
 
 <pre><code>pman archive proj-22</code></pre>
 
+      <h2>Configuration</h2>
+
+      <p>pman ships two types of configuration files:</p>
+
+      <h3>CLAUDE.md</h3>
+
+      <p>
+        Generic workflow instructions for Claude. Contains workflow rules, commands, and boundaries.
+        Written as directives for Claude, not documentation for humans.
+      </p>
+
+<pre><code>cp resources/CLAUDE.md ./</code></pre>
+
+      <h3>README.md (user-maintained)</h3>
+
+      <p>Your workspace-specific configuration. Document your:</p>
+
+      <ul>
+        <li>Directory layout and organization</li>
+        <li>Custom tools and commands</li>
+        <li>Project creation workflow</li>
+        <li>System-specific conventions</li>
+      </ul>
+
+      <p>Claude reads both files, combining generic workflow with your specific setup.</p>
+
       <h2>Claude Code Skills</h2>
 
       <p>
@@ -203,13 +250,25 @@ sequenceDiagram
       </p>
 
       <ul>
-        <li><strong>para-notes</strong>: PARA note management and SDLC tracking</li>
-        <li><strong>project-structure</strong>: Reverse-domain layout and project creation</li>
+        <li><strong>para-notes</strong>: PARA note management, project notes, pman usage</li>
+        <li><strong>project-structure</strong>: Workspace navigation, project boundaries</li>
       </ul>
 
-      <p>Install by copying to your skills directory:</p>
+      <p>Install to your workspace's <code>.claude/skills/</code> directory:</p>
 
-<pre><code>cp -r resources/skills/* ~/.claude/skills/</code></pre>
+<pre><code>mkdir -p ./.claude/skills
+cp -r resources/skills/* ./.claude/skills/
+# or symlink for automatic updates:
+ln -s /path/to/pman/resources/skills/* ./.claude/skills/</code></pre>
+
+      <h2>Upgrading</h2>
+
+      <p>Because <code>CLAUDE.md</code> and skills are generic, upgrading is simple:</p>
+
+<pre><code>cp resources/CLAUDE.md ./
+cp -r resources/skills/* ./.claude/skills/</code></pre>
+
+      <p>Your <code>README.md</code> stays untouched—no merge conflicts.</p>
 
       <h2>Keeping Things in Sync</h2>
 

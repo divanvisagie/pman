@@ -1,66 +1,50 @@
 ---
 name: project-structure
-description: Managing the ~/src reverse-domain project structure. Use when creating new projects, understanding project organization, navigating between projects, or working with cross-project resource sharing.
-allowed-tools: Bash(ls:*), Bash(fd:*), Bash(mkdir:*), Read
+description: Understanding workspace organization. Use when navigating between projects, understanding project boundaries, or working with cross-project references.
+allowed-tools: Bash(ls:*), Bash(fd:*), Read
 ---
 
-# ~/src Project Structure
+# Project Structure
 
-This directory uses a reverse-domain layout inspired by Java package conventions, organizing projects by ownership and domain.
+The workspace contains multiple independent projects. See the workspace README.md for the specific directory layout.
 
-## Directory Layout
+## Core Concepts
 
-```
-~/src/
-├── com/
-│   ├── yourdomain/       # Personal projects (your domain)
-│   ├── github/           # GitHub-hosted repos by owner
-│   │   └── yourusername/ # Your GitHub repos
-│   └── orgname/          # Organization projects
-├── localhost/            # Local-only projects
-└── Notes/                # PARA vault
-```
+- Each project subdirectory is its own git repository
+- The workspace root is not a git repository
+- Projects can reference each other via relative paths
 
-Adapt the structure to your domains and organizations.
+## Before Working on a Project
 
-## Philosophy
+1. Read the project's README.md
+2. Check for a project-specific CLAUDE.md
+3. Use the build/test commands specified in the README
 
-1. **Clear Ownership**: Projects organized by owner and host
-2. **Domain Mapping**: Paths mirror web domains (e.g., `com/github/user/project`)
-3. **Cross-Project References**: Siblings reference each other via relative paths
-4. **Namespace Collision Prevention**: Different orgs can have same-named projects
-5. **Scalability**: Easy to add new organizations or domains
+## Projects vs Repositories
 
-## Creating New Projects
+A **repository** is a codebase.
 
-Create a new directory under the appropriate domain:
+A **project** (in the PARA sense) is a time-bound effort—adding a feature, fixing a bug, refactoring a module.
 
-```bash
-mkdir -p ~/src/com/github/yourusername/new-project
-cd ~/src/com/github/yourusername/new-project
-git init
-```
+Repos don't map one-to-one to projects:
+- A single repo may have many projects over its lifetime
+- A project might touch multiple repos
 
-## Cross-Project Resource Sharing
+When making a change, that change belongs to a project note in `Notes/Projects/`.
+
+## Cross-Project References
 
 Reference other projects via relative paths:
 
 ```
-../../other-org/shared-lib/
 ../sibling-project/src/
+../../other-org/shared-lib/
 ```
 
-## Per-Project Documentation
+## Finding Projects
 
-Each project subdirectory is its own git repository. Always read:
-
-1. **README.md** - Primary documentation (build, test, deploy)
-2. **CLAUDE.md** (if present) - Claude Code configuration
-
-The `~/src` root itself is NOT a git repository—it's a filesystem organization strategy.
-
-## Projects vs Repositories
-
-A **repository** is a codebase. A **project** (in the PARA sense) is a time-bound effort—adding a feature, fixing a bug, refactoring a module. Repos don't map one-to-one to projects; a single repo may have many projects over its lifetime.
-
-When making a change, that change belongs to a project note in `Notes/Projects/`, not to the repository itself.
+```bash
+fd README.md              # Find all project READMEs
+fd CLAUDE.md              # Find project-specific Claude configs
+ls <workspace-path>       # List top-level directories
+```
