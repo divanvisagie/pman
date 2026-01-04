@@ -8,6 +8,11 @@ use std::path::{Path, PathBuf};
 
 const REGISTRY_HEADER: &str = "# Project Registry\n\nFlat list of project notes. IDs are chronological and unique across all projects.\n\n| ID | Name | Status | Created | Note |\n| --- | --- | --- | --- | --- |\n";
 
+// Embedded resources
+const CLAUDE_MD: &str = include_str!("../resources/CLAUDE.md");
+const PARA_NOTES_SKILL: &str = include_str!("../resources/skills/para-notes/SKILL.md");
+const PROJECT_STRUCTURE_SKILL: &str = include_str!("../resources/skills/project-structure/SKILL.md");
+
 #[derive(Debug, Clone)]
 pub struct NotesPaths {
     pub root: PathBuf,
@@ -96,9 +101,10 @@ pub fn create_project(
         .map(|value| format!("\n## Area\n- {value}\n"))
         .unwrap_or_default();
     let content = format!(
-        "# PROJ-{id}: {name}\n\n## Summary\n- \n\n## Status\n- {status}{area}\n## Notes\n- \n\n## Next\n- \n",
+        "# PROJ-{id}: {name}\n\n**Created**: {created}\n\n## Summary\n- \n\n## Status\n- {status}{area}\n## Notes\n- \n\n## Next\n- \n",
         id = next_id,
         name = name,
+        created = created,
         status = status,
         area = area_section
     );
@@ -365,6 +371,172 @@ fn find_notes_root_from_path(path: &Path) -> Option<PathBuf> {
         }
     }
     None
+}
+
+/// Initialize a new pman workspace at the given path.
+/// Creates Notes directory structure, CLAUDE.md, and skills.
+/// Skips any file or directory that already exists.
+pub fn init_workspace(workspace: &Path) -> Result<()> {
+    println!("Initializing pman workspace at {}", workspace.display());
+
+    // Create Notes directory structure
+    let notes_dirs = [
+        workspace.join("Notes").join("Projects"),
+        workspace.join("Notes").join("Areas"),
+        workspace.join("Notes").join("Resources"),
+        workspace.join("Notes").join("Archives").join("Projects"),
+    ];
+
+    for dir in &notes_dirs {
+        if dir.exists() {
+            println!("  skip: {} (exists)", dir.strip_prefix(workspace).unwrap_or(dir).display());
+        } else {
+            fs::create_dir_all(dir)
+                .with_context(|| format!("Failed to create {}", dir.display()))?;
+            println!("  create: {}", dir.strip_prefix(workspace).unwrap_or(dir).display());
+        }
+    }
+
+    // Create registry file
+    let registry = workspace.join("Notes").join("Projects").join("_registry.md");
+    if registry.exists() {
+        println!("  skip: {} (exists)", registry.strip_prefix(workspace).unwrap_or(&registry).display());
+    } else {
+        fs::write(&registry, REGISTRY_HEADER)
+            .with_context(|| format!("Failed to create {}", registry.display()))?;
+        println!("  create: {}", registry.strip_prefix(workspace).unwrap_or(&registry).display());
+    }
+
+    // Create CLAUDE.md
+    let claude_md = workspace.join("CLAUDE.md");
+    if claude_md.exists() {
+        println!("  skip: {} (exists)", claude_md.strip_prefix(workspace).unwrap_or(&claude_md).display());
+    } else {
+        fs::write(&claude_md, CLAUDE_MD)
+            .with_context(|| format!("Failed to create {}", claude_md.display()))?;
+        println!("  create: {}", claude_md.strip_prefix(workspace).unwrap_or(&claude_md).display());
+    }
+
+    // Create skills
+    let skills = [
+        (workspace.join(".claude").join("skills").join("para-notes").join("SKILL.md"), PARA_NOTES_SKILL),
+        (workspace.join(".claude").join("skills").join("project-structure").join("SKILL.md"), PROJECT_STRUCTURE_SKILL),
+    ];
+
+    for (path, content) in &skills {
+        if path.exists() {
+            println!("  skip: {} (exists)", path.strip_prefix(workspace).unwrap_or(path).display());
+        } else {
+            if let Some(parent) = path.parent() {
+                fs::create_dir_all(parent)
+                    .with_context(|| format!("Failed to create {}", parent.display()))?;
+            }
+            fs::write(path, content)
+                .with_context(|| format!("Failed to create {}", path.display()))?;
+            println!("  create: {}", path.strip_prefix(workspace).unwrap_or(path).display());
+        }
+    }
+
+    println!("\nWorkspace initialized. Create a README.md with your custom configuration.");
+    Ok(())
+}
+
+/// Verify workspace setup and report any issues.
+/// Returns true if all checks pass, false otherwise.
+pub fn verify_workspace(workspace: &Path) -> Result<bool> {
+    println!("Verifying pman workspace at {}", workspace.display());
+
+    let mut all_ok = true;
+
+    // Check Notes directory structure
+    let notes_dirs = [
+        ("Notes/Projects", workspace.join("Notes").join("Projects")),
+        ("Notes/Areas", workspace.join("Notes").join("Areas")),
+        ("Notes/Resources", workspace.join("Notes").join("Resources")),
+        ("Notes/Archives/Projects", workspace.join("Notes").join("Archives").join("Projects")),
+    ];
+
+    for (name, path) in &notes_dirs {
+        if path.exists() {
+            println!("  ✓ {}", name);
+        } else {
+            println!("  ✗ {} (missing)", name);
+            all_ok = false;
+        }
+    }
+
+    // Check registry file
+    let registry = workspace.join("Notes").join("Projects").join("_registry.md");
+    if registry.exists() {
+        println!("  ✓ Notes/Projects/_registry.md");
+    } else {
+        println!("  ✗ Notes/Projects/_registry.md (missing)");
+        all_ok = false;
+    }
+
+    // Check CLAUDE.md
+    let claude_md = workspace.join("CLAUDE.md");
+    if claude_md.exists() {
+        println!("  ✓ CLAUDE.md");
+    } else {
+        println!("  ✗ CLAUDE.md (missing)");
+        all_ok = false;
+    }
+
+    // Check skills
+    let skills = [
+        (".claude/skills/para-notes/SKILL.md", workspace.join(".claude").join("skills").join("para-notes").join("SKILL.md")),
+        (".claude/skills/project-structure/SKILL.md", workspace.join(".claude").join("skills").join("project-structure").join("SKILL.md")),
+    ];
+
+    for (name, path) in &skills {
+        if path.exists() {
+            println!("  ✓ {}", name);
+        } else {
+            println!("  ✗ {} (missing)", name);
+            all_ok = false;
+        }
+    }
+
+    // Summary
+    if all_ok {
+        println!("\nWorkspace OK.");
+    } else {
+        println!("\nIssues found. Run 'pman init' to create missing directories, or 'pman update' to restore CLAUDE.md and skills.");
+    }
+
+    Ok(all_ok)
+}
+
+/// Update CLAUDE.md and skills to the latest embedded versions.
+/// Always overwrites existing files.
+pub fn update_workspace(workspace: &Path) -> Result<()> {
+    println!("Updating pman resources at {}", workspace.display());
+
+    // Update CLAUDE.md
+    let claude_md = workspace.join("CLAUDE.md");
+    fs::write(&claude_md, CLAUDE_MD)
+        .with_context(|| format!("Failed to write {}", claude_md.display()))?;
+    println!("  update: CLAUDE.md");
+
+    // Update skills
+    let skills = [
+        (workspace.join(".claude").join("skills").join("para-notes").join("SKILL.md"), PARA_NOTES_SKILL),
+        (workspace.join(".claude").join("skills").join("project-structure").join("SKILL.md"), PROJECT_STRUCTURE_SKILL),
+    ];
+
+    for (path, content) in &skills {
+        if let Some(parent) = path.parent() {
+            fs::create_dir_all(parent)
+                .with_context(|| format!("Failed to create {}", parent.display()))?;
+        }
+        fs::write(path, content)
+            .with_context(|| format!("Failed to write {}", path.display()))?;
+        println!("  update: {}", path.strip_prefix(workspace).unwrap_or(path).display());
+    }
+
+    println!("\nResources updated to pman v{}.", env!("CARGO_PKG_VERSION"));
+    Ok(())
 }
 
 #[cfg(test)]

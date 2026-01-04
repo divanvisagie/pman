@@ -11,16 +11,76 @@ This document covers the CLI behavior. The workflow manual lives in the README.
 ## Install
 
 ```sh
-cargo install --path /path/to/pman
+cargo install --git https://github.com/divanvisagie/pman
 ```
 
-Or run directly:
+Then initialize a workspace:
 
 ```sh
-cargo run -- new "Project Name" --status active
+cd ~/src  # or any directory you want as workspace root
+pman init
 ```
 
 ## Commands
+
+### init
+
+Initialize a new pman workspace.
+
+```sh
+pman init              # current directory
+pman init ~/src        # specific path
+```
+
+Creates:
+- `Notes/Projects/`, `Notes/Areas/`, `Notes/Resources/`, `Notes/Archives/Projects/`
+- `Notes/Projects/_registry.md` with header template
+- `CLAUDE.md` (generic workflow rules)
+- `.claude/skills/para-notes/SKILL.md`
+- `.claude/skills/project-structure/SKILL.md`
+
+Behavior:
+- Skips any file or directory that already exists (never overwrites)
+- Safe to run multiple times
+
+### update
+
+Update CLAUDE.md and skills to the versions embedded in your pman binary.
+
+```sh
+pman update              # current directory
+pman update --path ~/src # specific path
+```
+
+Updates:
+- `CLAUDE.md`
+- `.claude/skills/para-notes/SKILL.md`
+- `.claude/skills/project-structure/SKILL.md`
+
+Behavior:
+- Always overwrites (these files are generic; user config belongs in README.md)
+- To get newer versions, update pman itself: `cargo install --git https://github.com/divanvisagie/pman`
+
+### verify
+
+Check workspace setup and report any issues.
+
+```sh
+pman verify              # current directory
+pman verify --path ~/src # specific path
+```
+
+Checks:
+- Notes directory structure (Projects, Areas, Resources, Archives/Projects)
+- `Notes/Projects/_registry.md`
+- `CLAUDE.md`
+- `.claude/skills/para-notes/SKILL.md`
+- `.claude/skills/project-structure/SKILL.md`
+
+Behavior:
+- Reports ✓ for present items, ✗ for missing
+- Exits with code 1 if any issues found
+- Suggests `pman init` or `pman update` to fix
 
 ### new
 

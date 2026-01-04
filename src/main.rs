@@ -2,7 +2,7 @@ use anyhow::Result;
 use clap::{Parser, Subcommand};
 use std::path::PathBuf;
 
-use pman::{archive_project, create_project, resolve_notes_dir, NotesPaths};
+use pman::{archive_project, create_project, init_workspace, resolve_notes_dir, update_workspace, verify_workspace, NotesPaths};
 
 #[derive(Parser)]
 #[command(name = "pman", version, about = "Notes project manager")]
@@ -13,6 +13,24 @@ struct Cli {
 
 #[derive(Subcommand)]
 enum Commands {
+    /// Initialize a new pman workspace
+    Init {
+        /// Workspace directory (default: current directory)
+        #[arg(default_value = ".")]
+        path: PathBuf,
+    },
+    /// Update CLAUDE.md and skills to latest embedded versions
+    Update {
+        /// Workspace directory (default: current directory)
+        #[arg(long, default_value = ".")]
+        path: PathBuf,
+    },
+    /// Verify workspace setup and report any issues
+    Verify {
+        /// Workspace directory (default: current directory)
+        #[arg(long, default_value = ".")]
+        path: PathBuf,
+    },
     /// Create a new project note in Notes/Projects
     New {
         /// Project name (used for title and slug)
@@ -41,6 +59,33 @@ fn main() -> Result<()> {
     let cli = Cli::parse();
 
     match cli.command {
+        Commands::Init { path } => {
+            let workspace = if path.is_absolute() {
+                path
+            } else {
+                std::env::current_dir()?.join(path)
+            };
+            init_workspace(&workspace)?;
+        }
+        Commands::Update { path } => {
+            let workspace = if path.is_absolute() {
+                path
+            } else {
+                std::env::current_dir()?.join(path)
+            };
+            update_workspace(&workspace)?;
+        }
+        Commands::Verify { path } => {
+            let workspace = if path.is_absolute() {
+                path
+            } else {
+                std::env::current_dir()?.join(path)
+            };
+            let ok = verify_workspace(&workspace)?;
+            if !ok {
+                std::process::exit(1);
+            }
+        }
         Commands::New {
             name,
             status,
