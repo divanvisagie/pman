@@ -2,6 +2,8 @@
 
 Instructions for Claude Code to set up the pman workflow in the current working directory.
 
+**Important**: Before creating any file or directory, check if it already exists. Never overwrite existing files or directories. Skip any step where the target already exists.
+
 ## Directory Structure
 
 Create these directories relative to the current working directory:
