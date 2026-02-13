@@ -31,6 +31,28 @@ This creates:
 - `Projects/proj-<n>-<slug>/README.md`
 - Entry in `Projects/_registry.md`
 
+## Note I/O From Any Directory
+
+Prefer `pman` note commands for file reads and edits, instead of raw shell file operations:
+
+```bash
+pman read Projects/proj-98-example/README.md --numbered
+pman edit Projects/proj-98-example/README.md --replace-lines 10:14 --with "new text" --expect "old text"
+pman write Projects/proj-98-example/README.md --content "# PROJ-98: ..."
+```
+
+Use wrappers as convenience commands when needed:
+
+```bash
+pman cat Projects/proj-98-example/README.md
+pman head Projects/proj-98-example/README.md --lines 40
+pman tail Projects/proj-98-example/README.md --lines 40
+pman wc Projects/proj-98-example/README.md --lines --words
+pman less Projects/proj-98-example/README.md
+```
+
+`read`/`write`/`edit` are the core primitives. `cat`/`head`/`tail`/`less` are thin wrappers for familiar ergonomics.
+
 ## Project Note Template
 
 ```markdown

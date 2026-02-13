@@ -1,8 +1,13 @@
 use anyhow::Result;
 use clap::{Parser, Subcommand};
+use std::io::Read;
 use std::path::PathBuf;
 
-use pman::{archive_project, create_project, init_workspace, resolve_notes_dir, update_workspace, verify_workspace, NotesPaths};
+use pman::{
+    archive_project, cat_note, create_project, edit_note, generate_skill, head_note,
+    init_workspace, less_note, read_note, resolve_notes_dir, tail_note, update_workspace,
+    verify_workspace, wc_note, write_note, NotesPaths, WcFlags,
+};
 
 #[derive(Parser)]
 #[command(name = "pman", version, about = "Notes project manager")]
@@ -50,6 +55,126 @@ enum Commands {
         /// Project directory name or prefix (e.g. proj-0022)
         project: String,
         /// Override Notes root directory
+        #[arg(long)]
+        notes_dir: Option<PathBuf>,
+    },
+    /// Read a note file relative to notes root
+    Read {
+        /// Note path relative to notes root
+        path: PathBuf,
+        /// Override Notes root directory
+        #[arg(long)]
+        notes_dir: Option<PathBuf>,
+        /// Inclusive line range (start:end), 1-based
+        #[arg(long)]
+        lines: Option<String>,
+        /// Include line numbers in output
+        #[arg(long)]
+        numbered: bool,
+    },
+    /// Replace a note file's full contents
+    Write {
+        /// Note path relative to notes root
+        path: PathBuf,
+        /// Override Notes root directory
+        #[arg(long)]
+        notes_dir: Option<PathBuf>,
+        /// Create parent directories if missing
+        #[arg(long)]
+        create_dirs: bool,
+        /// Content to write; if omitted, stdin is used
+        #[arg(long)]
+        content: Option<String>,
+    },
+    /// Replace an inclusive line range in a note file
+    Edit {
+        /// Note path relative to notes root
+        path: PathBuf,
+        /// Override Notes root directory
+        #[arg(long)]
+        notes_dir: Option<PathBuf>,
+        /// Inclusive line range to replace (start:end), 1-based
+        #[arg(long)]
+        replace_lines: String,
+        /// Replacement text for the selected range
+        #[arg(long = "with")]
+        with_text: String,
+        /// Optional expected text guard for stale-context detection
+        #[arg(long)]
+        expect: Option<String>,
+    },
+    /// Notes-scoped cat wrapper
+    Cat {
+        /// Note path relative to notes root
+        path: PathBuf,
+        /// Override Notes root directory
+        #[arg(long)]
+        notes_dir: Option<PathBuf>,
+    },
+    /// Notes-scoped head wrapper
+    Head {
+        /// Note path relative to notes root
+        path: PathBuf,
+        /// Number of lines to show
+        #[arg(long, default_value_t = 10)]
+        lines: usize,
+        /// Override Notes root directory
+        #[arg(long)]
+        notes_dir: Option<PathBuf>,
+    },
+    /// Notes-scoped tail wrapper
+    Tail {
+        /// Note path relative to notes root
+        path: PathBuf,
+        /// Number of lines to show
+        #[arg(long, default_value_t = 10)]
+        lines: usize,
+        /// Override Notes root directory
+        #[arg(long)]
+        notes_dir: Option<PathBuf>,
+    },
+    /// Notes-scoped wc wrapper
+    Wc {
+        /// Note path relative to notes root
+        path: PathBuf,
+        /// Override Notes root directory
+        #[arg(long)]
+        notes_dir: Option<PathBuf>,
+        /// Show line count
+        #[arg(long)]
+        lines: bool,
+        /// Show word count
+        #[arg(long)]
+        words: bool,
+        /// Show byte count
+        #[arg(long)]
+        bytes: bool,
+        /// Show character count
+        #[arg(long)]
+        chars: bool,
+    },
+    /// Notes-scoped less wrapper
+    Less {
+        /// Note path relative to notes root
+        path: PathBuf,
+        /// Override Notes root directory
+        #[arg(long)]
+        notes_dir: Option<PathBuf>,
+    },
+    /// Skill operations
+    Skill {
+        #[command(subcommand)]
+        command: SkillCommands,
+    },
+}
+
+#[derive(Subcommand)]
+enum SkillCommands {
+    /// Print a complete SKILL.md template to stdout
+    Generate {
+        /// Profile to generate (e.g. para-notes-io)
+        profile: String,
+        /// Optional notes root path hint for examples
         #[arg(long)]
         notes_dir: Option<PathBuf>,
     },
@@ -106,6 +231,96 @@ fn main() -> Result<()> {
             let dest = archive_project(&paths, &project)?;
             println!("Archived {}", dest.display());
         }
+        Commands::Read {
+            path,
+            notes_dir,
+            lines,
+            numbered,
+        } => {
+            let output = read_note(notes_dir, &path, lines.as_deref(), numbered)?;
+            print!("{output}");
+        }
+        Commands::Write {
+            path,
+            notes_dir,
+            create_dirs,
+            content,
+        } => {
+            let body = match content {
+                Some(value) => value,
+                None => {
+                    let mut buffer = String::new();
+                    std::io::stdin().read_to_string(&mut buffer)?;
+                    buffer
+                }
+            };
+            let target = write_note(notes_dir, &path, &body, create_dirs)?;
+            println!("Wrote {}", target.display());
+        }
+        Commands::Edit {
+            path,
+            notes_dir,
+            replace_lines,
+            with_text,
+            expect,
+        } => {
+            let target = edit_note(
+                notes_dir,
+                &path,
+                &replace_lines,
+                &with_text,
+                expect.as_deref(),
+            )?;
+            println!("Edited {}", target.display());
+        }
+        Commands::Cat { path, notes_dir } => {
+            let output = cat_note(notes_dir, &path)?;
+            print!("{output}");
+        }
+        Commands::Head {
+            path,
+            lines,
+            notes_dir,
+        } => {
+            let output = head_note(notes_dir, &path, lines)?;
+            print!("{output}");
+        }
+        Commands::Tail {
+            path,
+            lines,
+            notes_dir,
+        } => {
+            let output = tail_note(notes_dir, &path, lines)?;
+            print!("{output}");
+        }
+        Commands::Wc {
+            path,
+            notes_dir,
+            lines,
+            words,
+            bytes,
+            chars,
+        } => {
+            let flags = WcFlags {
+                lines,
+                words,
+                bytes,
+                chars,
+            };
+            let output = wc_note(notes_dir, &path, flags)?;
+            print!("{output}");
+        }
+        Commands::Less { path, notes_dir } => {
+            if let Some(output) = less_note(notes_dir, &path)? {
+                print!("{output}");
+            }
+        }
+        Commands::Skill { command } => match command {
+            SkillCommands::Generate { profile, notes_dir } => {
+                let output = generate_skill(&profile, notes_dir)?;
+                print!("{output}");
+            }
+        },
     }
 
     Ok(())

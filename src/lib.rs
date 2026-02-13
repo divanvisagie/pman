@@ -3,8 +3,9 @@ use chrono::Local;
 use regex::Regex;
 use std::fs;
 use std::fs::OpenOptions;
-use std::io::Write;
+use std::io::{IsTerminal, Write};
 use std::path::{Path, PathBuf};
+use std::process::Command;
 
 const REGISTRY_HEADER: &str = "# Project Registry\n\nFlat list of project notes. IDs are chronological and unique across all projects.\n\n| ID | Name | Status | Created | Note |\n| --- | --- | --- | --- | --- |\n";
 
@@ -12,6 +13,20 @@ const REGISTRY_HEADER: &str = "# Project Registry\n\nFlat list of project notes.
 const CLAUDE_MD: &str = include_str!("../resources/CLAUDE.md");
 const PARA_NOTES_SKILL: &str = include_str!("../resources/skills/para-notes/SKILL.md");
 const PROJECT_STRUCTURE_SKILL: &str = include_str!("../resources/skills/project-structure/SKILL.md");
+
+#[derive(Debug, Clone, Copy, Default)]
+pub struct WcFlags {
+    pub lines: bool,
+    pub words: bool,
+    pub bytes: bool,
+    pub chars: bool,
+}
+
+#[derive(Debug, Clone, Copy)]
+struct LineRange {
+    start: usize,
+    end: usize,
+}
 
 #[derive(Debug, Clone)]
 pub struct NotesPaths {
@@ -59,6 +74,421 @@ pub fn resolve_notes_dir(notes_dir: Option<PathBuf>) -> Result<PathBuf> {
     }
 
     bail!("Could not locate Notes root; use --notes-dir to specify it")
+}
+
+pub fn read_note(
+    notes_dir: Option<PathBuf>,
+    path: &Path,
+    lines: Option<&str>,
+    numbered: bool,
+) -> Result<String> {
+    let (all_lines, trailing_newline) = read_note_lines(notes_dir, path)?;
+
+    let (range, selected_has_trailing_newline) = match lines {
+        Some(spec) => {
+            let range = parse_line_range(spec)?;
+            ensure_range_in_bounds(range, all_lines.len())?;
+            let has_trailing = if all_lines.is_empty() {
+                false
+            } else {
+                range.end < all_lines.len() || (range.end == all_lines.len() && trailing_newline)
+            };
+            (range, has_trailing)
+        }
+        None => (
+            if all_lines.is_empty() {
+                LineRange { start: 1, end: 1 }
+            } else {
+                LineRange {
+                    start: 1,
+                    end: all_lines.len(),
+                }
+            },
+            trailing_newline,
+        ),
+    };
+
+    if all_lines.is_empty() {
+        return Ok(String::new());
+    }
+
+    if !numbered {
+        return Ok(render_line_range(
+            &all_lines,
+            range,
+            selected_has_trailing_newline,
+        ));
+    }
+
+    let slice = &all_lines[(range.start - 1)..range.end];
+    let mut output = slice
+        .iter()
+        .enumerate()
+        .map(|(offset, line)| format!("{:>6}\t{line}", range.start + offset))
+        .collect::<Vec<String>>()
+        .join("\n");
+    if selected_has_trailing_newline {
+        output.push('\n');
+    }
+    Ok(output)
+}
+
+pub fn write_note(
+    notes_dir: Option<PathBuf>,
+    path: &Path,
+    content: &str,
+    create_dirs: bool,
+) -> Result<PathBuf> {
+    let root = canonical_notes_root(notes_dir)?;
+    let target = resolve_writable_note_file(&root, path, create_dirs)?;
+    fs::write(&target, content)
+        .with_context(|| format!("Failed to write note {}", target.display()))?;
+    Ok(target)
+}
+
+pub fn edit_note(
+    notes_dir: Option<PathBuf>,
+    path: &Path,
+    replace_lines: &str,
+    with_text: &str,
+    expect: Option<&str>,
+) -> Result<PathBuf> {
+    let root = canonical_notes_root(notes_dir)?;
+    let target = resolve_existing_note_file(&root, path)?;
+    let content = fs::read_to_string(&target)
+        .with_context(|| format!("Failed to read note {}", target.display()))?;
+    let range = parse_line_range(replace_lines)?;
+
+    let (mut lines, mut trailing_newline) = split_lines(&content);
+    ensure_range_in_bounds(range, lines.len())?;
+
+    let current = if lines.is_empty() {
+        String::new()
+    } else {
+        let has_trailing =
+            range.end < lines.len() || (range.end == lines.len() && trailing_newline);
+        render_line_range(&lines, range, has_trailing)
+    };
+
+    if let Some(expected) = expect {
+        if current != expected {
+            bail!(
+                "Expected text mismatch for lines {}:{}",
+                range.start,
+                range.end
+            );
+        }
+    }
+
+    let (replacement_lines, replacement_trailing) = split_lines(with_text);
+    let original_len = lines.len();
+    if original_len == 0 {
+        lines = replacement_lines;
+        trailing_newline = replacement_trailing;
+    } else {
+        lines.splice((range.start - 1)..range.end, replacement_lines);
+        if range.end == original_len {
+            trailing_newline = replacement_trailing;
+        }
+    }
+
+    let updated = join_lines(&lines, trailing_newline);
+    fs::write(&target, updated)
+        .with_context(|| format!("Failed to write note {}", target.display()))?;
+    Ok(target)
+}
+
+pub fn cat_note(notes_dir: Option<PathBuf>, path: &Path) -> Result<String> {
+    read_note(notes_dir, path, None, false)
+}
+
+pub fn head_note(notes_dir: Option<PathBuf>, path: &Path, count: usize) -> Result<String> {
+    let (lines, trailing_newline) = read_note_lines(notes_dir, path)?;
+    if lines.is_empty() || count == 0 {
+        return Ok(String::new());
+    }
+    let end = count.min(lines.len());
+    let range = LineRange { start: 1, end };
+    let has_trailing = end < lines.len() || (end == lines.len() && trailing_newline);
+    Ok(render_line_range(&lines, range, has_trailing))
+}
+
+pub fn tail_note(notes_dir: Option<PathBuf>, path: &Path, count: usize) -> Result<String> {
+    let (lines, trailing_newline) = read_note_lines(notes_dir, path)?;
+    if lines.is_empty() || count == 0 {
+        return Ok(String::new());
+    }
+    let start = lines.len().saturating_sub(count) + 1;
+    let range = LineRange {
+        start,
+        end: lines.len(),
+    };
+    Ok(render_line_range(&lines, range, trailing_newline))
+}
+
+pub fn wc_note(notes_dir: Option<PathBuf>, path: &Path, flags: WcFlags) -> Result<String> {
+    let root = canonical_notes_root(notes_dir)?;
+    let target = resolve_existing_note_file(&root, path)?;
+    let content = fs::read_to_string(&target)
+        .with_context(|| format!("Failed to read note {}", target.display()))?;
+
+    let line_count = content.bytes().filter(|byte| *byte == b'\n').count();
+    let word_count = content.split_whitespace().count();
+    let byte_count = content.as_bytes().len();
+    let char_count = content.chars().count();
+
+    let mut rows = Vec::new();
+    let any_flags = flags.lines || flags.words || flags.bytes || flags.chars;
+    if !any_flags || flags.lines {
+        rows.push(format!("lines: {line_count}"));
+    }
+    if !any_flags || flags.words {
+        rows.push(format!("words: {word_count}"));
+    }
+    if !any_flags || flags.bytes {
+        rows.push(format!("bytes: {byte_count}"));
+    }
+    if !any_flags || flags.chars {
+        rows.push(format!("chars: {char_count}"));
+    }
+
+    Ok(rows.join("\n") + "\n")
+}
+
+pub fn less_note(notes_dir: Option<PathBuf>, path: &Path) -> Result<Option<String>> {
+    let root = canonical_notes_root(notes_dir)?;
+    let target = resolve_existing_note_file(&root, path)?;
+
+    if std::io::stdin().is_terminal() && std::io::stdout().is_terminal() {
+        let status = Command::new("less")
+            .arg(&target)
+            .status()
+            .with_context(|| format!("Failed to run less for {}", target.display()))?;
+        if !status.success() {
+            bail!("less exited with non-zero status");
+        }
+        Ok(None)
+    } else {
+        let content = fs::read_to_string(&target)
+            .with_context(|| format!("Failed to read note {}", target.display()))?;
+        Ok(Some(content))
+    }
+}
+
+pub fn generate_skill(profile: &str, notes_dir: Option<PathBuf>) -> Result<String> {
+    match profile {
+        "para-notes-io" => Ok(generate_para_notes_io_skill(notes_dir)),
+        _ => bail!("Unknown profile {profile}; supported profiles: para-notes-io"),
+    }
+}
+
+fn parse_line_range(spec: &str) -> Result<LineRange> {
+    let mut parts = spec.splitn(2, ':');
+    let start = parts
+        .next()
+        .context("Line range must be in start:end format")?
+        .parse::<usize>()
+        .context("Line range start must be a positive integer")?;
+    let end = parts
+        .next()
+        .context("Line range must be in start:end format")?
+        .parse::<usize>()
+        .context("Line range end must be a positive integer")?;
+
+    if start == 0 || end == 0 {
+        bail!("Line range values are 1-based and must be greater than zero");
+    }
+    if end < start {
+        bail!("Line range end must be greater than or equal to start");
+    }
+
+    Ok(LineRange { start, end })
+}
+
+fn ensure_range_in_bounds(range: LineRange, line_count: usize) -> Result<()> {
+    if line_count == 0 {
+        if range.start == 1 && range.end == 1 {
+            return Ok(());
+        }
+        bail!("Line range {}:{} is out of bounds for empty file", range.start, range.end);
+    }
+
+    if range.end > line_count {
+        bail!(
+            "Line range {}:{} is out of bounds for a {}-line file",
+            range.start,
+            range.end,
+            line_count
+        );
+    }
+
+    Ok(())
+}
+
+fn render_line_range(lines: &[String], range: LineRange, trailing_newline: bool) -> String {
+    if lines.is_empty() {
+        return String::new();
+    }
+
+    let mut output = lines[(range.start - 1)..range.end].join("\n");
+    if trailing_newline {
+        output.push('\n');
+    }
+    output
+}
+
+fn split_lines(content: &str) -> (Vec<String>, bool) {
+    if content.is_empty() {
+        return (Vec::new(), false);
+    }
+
+    let trailing_newline = content.ends_with('\n');
+    let mut lines = content
+        .split('\n')
+        .map(std::string::ToString::to_string)
+        .collect::<Vec<String>>();
+    if trailing_newline {
+        lines.pop();
+    }
+    (lines, trailing_newline)
+}
+
+fn join_lines(lines: &[String], trailing_newline: bool) -> String {
+    let mut output = lines.join("\n");
+    if trailing_newline {
+        output.push('\n');
+    }
+    output
+}
+
+fn read_note_lines(notes_dir: Option<PathBuf>, path: &Path) -> Result<(Vec<String>, bool)> {
+    let root = canonical_notes_root(notes_dir)?;
+    let target = resolve_existing_note_file(&root, path)?;
+    let content = fs::read_to_string(&target)
+        .with_context(|| format!("Failed to read note {}", target.display()))?;
+    Ok(split_lines(&content))
+}
+
+fn canonical_notes_root(notes_dir: Option<PathBuf>) -> Result<PathBuf> {
+    let root = resolve_notes_dir(notes_dir)?;
+    let canonical = fs::canonicalize(&root)
+        .with_context(|| format!("Failed to resolve notes root {}", root.display()))?;
+    if !canonical.is_dir() {
+        bail!("Notes root is not a directory: {}", canonical.display());
+    }
+    Ok(canonical)
+}
+
+fn resolve_existing_note_file(root: &Path, relative: &Path) -> Result<PathBuf> {
+    if relative.is_absolute() {
+        bail!("Path must be relative to notes root: {}", relative.display());
+    }
+
+    let joined = root.join(relative);
+    let canonical = fs::canonicalize(&joined)
+        .with_context(|| format!("Failed to resolve note path {}", joined.display()))?;
+    ensure_contained(root, &canonical)?;
+
+    if !canonical.is_file() {
+        bail!("Path is not a file: {}", canonical.display());
+    }
+
+    Ok(canonical)
+}
+
+fn resolve_writable_note_file(root: &Path, relative: &Path, create_dirs: bool) -> Result<PathBuf> {
+    if relative.is_absolute() {
+        bail!("Path must be relative to notes root: {}", relative.display());
+    }
+
+    let name = relative
+        .file_name()
+        .context("Path must include a file name")?;
+    let parent_rel = relative.parent().unwrap_or_else(|| Path::new(""));
+    let joined_parent = root.join(parent_rel);
+
+    if !joined_parent.exists() {
+        if create_dirs {
+            fs::create_dir_all(&joined_parent).with_context(|| {
+                format!(
+                    "Failed to create parent directories {}",
+                    joined_parent.display()
+                )
+            })?;
+        } else {
+            bail!(
+                "Parent directory does not exist: {} (use --create-dirs)",
+                joined_parent.display()
+            );
+        }
+    }
+
+    let canonical_parent = fs::canonicalize(&joined_parent)
+        .with_context(|| format!("Failed to resolve parent path {}", joined_parent.display()))?;
+    ensure_contained(root, &canonical_parent)?;
+
+    let target = canonical_parent.join(name);
+    if target.exists() {
+        let canonical_target = fs::canonicalize(&target)
+            .with_context(|| format!("Failed to resolve note path {}", target.display()))?;
+        ensure_contained(root, &canonical_target)?;
+        if canonical_target.is_dir() {
+            bail!("Path is a directory: {}", canonical_target.display());
+        }
+        return Ok(canonical_target);
+    }
+
+    Ok(target)
+}
+
+fn ensure_contained(root: &Path, target: &Path) -> Result<()> {
+    if target.starts_with(root) {
+        return Ok(());
+    }
+    bail!(
+        "Resolved path escapes notes root: {}",
+        target.display()
+    )
+}
+
+fn generate_para_notes_io_skill(notes_dir: Option<PathBuf>) -> String {
+    let notes_flag = notes_dir
+        .map(|path| format!(" --notes-dir {}", path.display()))
+        .unwrap_or_default();
+    format!(
+        r#"---
+name: para-notes-io
+description: Use pman note I/O commands for scoped note reads and edits from any working directory.
+allowed-tools: Bash(pman:*), Bash(fd:*), Bash(rg:*)
+---
+
+# PARA Notes I/O
+
+Use `pman` subcommands for note file operations so paths are always resolved from the Notes root and remain containment-safe.
+
+## Preferred primitives
+
+```bash
+pman read <path>{notes_flag} --numbered
+pman edit <path>{notes_flag} --replace-lines <start:end> --with "<text>" --expect "<old>"
+pman write <path>{notes_flag} --content "<full-document>"
+```
+
+Use `pman write` for deterministic full rewrites, and `pman edit` for line-range patches.
+
+## Inspection wrappers
+
+```bash
+pman cat <path>{notes_flag}
+pman head <path>{notes_flag} --lines 40
+pman tail <path>{notes_flag} --lines 40
+pman wc <path>{notes_flag} --lines --words
+pman less <path>{notes_flag}
+```
+
+These wrappers are convenience aliases; prefer `pman read` when line-numbered planning is needed.
+"#
+    )
 }
 
 pub fn create_project(
@@ -544,6 +974,13 @@ mod tests {
     use super::*;
     use tempfile::tempdir;
 
+    fn setup_notes_root() -> (tempfile::TempDir, PathBuf) {
+        let temp = tempdir().unwrap();
+        let root = temp.path().join("Notes");
+        fs::create_dir_all(&root).unwrap();
+        (temp, root)
+    }
+
     #[test]
     fn slugify_rejects_empty() {
         let err = slugify("!!!").unwrap_err().to_string();
@@ -619,5 +1056,142 @@ mod tests {
         assert!(note_path
             .to_string_lossy()
             .contains("proj-1-religion-runes-notes/README.md"));
+    }
+
+    #[test]
+    fn read_note_supports_numbered_ranges() {
+        let (_temp, root) = setup_notes_root();
+        let file = root.join("Projects").join("sample.md");
+        fs::create_dir_all(file.parent().unwrap()).unwrap();
+        fs::write(&file, "alpha\nbeta\ngamma\n").unwrap();
+
+        let output = read_note(
+            Some(root),
+            Path::new("Projects/sample.md"),
+            Some("2:3"),
+            true,
+        )
+        .unwrap();
+        assert_eq!(output, "     2\tbeta\n     3\tgamma\n");
+    }
+
+    #[test]
+    fn edit_note_enforces_expected_text_guard() {
+        let (_temp, root) = setup_notes_root();
+        let file = root.join("Projects").join("sample.md");
+        fs::create_dir_all(file.parent().unwrap()).unwrap();
+        fs::write(&file, "one\ntwo\nthree\n").unwrap();
+
+        let err = edit_note(
+            Some(root.clone()),
+            Path::new("Projects/sample.md"),
+            "2:2",
+            "updated",
+            Some("wrong\n"),
+        )
+        .unwrap_err()
+        .to_string();
+        assert!(err.contains("Expected text mismatch"));
+
+        edit_note(
+            Some(root.clone()),
+            Path::new("Projects/sample.md"),
+            "2:2",
+            "updated",
+            Some("two\n"),
+        )
+        .unwrap();
+        let updated = fs::read_to_string(&file).unwrap();
+        assert_eq!(updated, "one\nupdated\nthree\n");
+    }
+
+    #[test]
+    fn edit_note_replaces_empty_file_range() {
+        let (_temp, root) = setup_notes_root();
+        let file = root.join("Resources").join("empty.md");
+        fs::create_dir_all(file.parent().unwrap()).unwrap();
+        fs::write(&file, "").unwrap();
+
+        edit_note(
+            Some(root.clone()),
+            Path::new("Resources/empty.md"),
+            "1:1",
+            "hello\nworld\n",
+            None,
+        )
+        .unwrap();
+
+        let updated = fs::read_to_string(&file).unwrap();
+        assert_eq!(updated, "hello\nworld\n");
+    }
+
+    #[test]
+    fn write_note_creates_dirs_when_requested() {
+        let (_temp, root) = setup_notes_root();
+        let target_rel = Path::new("Areas/team/notes.md");
+
+        write_note(Some(root.clone()), target_rel, "body", true).unwrap();
+        let updated = fs::read_to_string(root.join(target_rel)).unwrap();
+        assert_eq!(updated, "body");
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn write_note_blocks_symlink_escape() {
+        use std::os::unix::fs::symlink;
+
+        let (_temp, root) = setup_notes_root();
+        let outside = root.parent().unwrap().join("outside");
+        fs::create_dir_all(&outside).unwrap();
+        let link = root.join("escape");
+        symlink(&outside, &link).unwrap();
+
+        let err = write_note(
+            Some(root),
+            Path::new("escape/evil.md"),
+            "bad",
+            false,
+        )
+        .unwrap_err()
+        .to_string();
+        assert!(err.contains("escapes notes root"));
+    }
+
+    #[test]
+    fn wc_note_reports_selected_counts() {
+        let (_temp, root) = setup_notes_root();
+        let file = root.join("Projects").join("wc.md");
+        fs::create_dir_all(file.parent().unwrap()).unwrap();
+        fs::write(&file, "a bb\nccc\n").unwrap();
+
+        let output = wc_note(
+            Some(root),
+            Path::new("Projects/wc.md"),
+            WcFlags {
+                words: true,
+                ..WcFlags::default()
+            },
+        )
+        .unwrap();
+        assert_eq!(output, "words: 3\n");
+    }
+
+    #[test]
+    fn less_note_falls_back_to_cat_without_tty() {
+        let (_temp, root) = setup_notes_root();
+        let file = root.join("Projects").join("less.md");
+        fs::create_dir_all(file.parent().unwrap()).unwrap();
+        fs::write(&file, "hello\n").unwrap();
+
+        let output = less_note(Some(root), Path::new("Projects/less.md")).unwrap();
+        assert_eq!(output.as_deref(), Some("hello\n"));
+    }
+
+    #[test]
+    fn generate_skill_supports_para_notes_io() {
+        let output = generate_skill("para-notes-io", None).unwrap();
+        assert!(output.contains("name: para-notes-io"));
+        assert!(output.contains("pman read"));
+        assert!(output.contains("pman edit"));
     }
 }

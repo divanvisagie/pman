@@ -7,6 +7,7 @@ This document covers the CLI behavior. The workflow manual lives in the README.
 - A **project** is a time-bound effort (feature, bugfix, refactor)—not a repository. A repo may have many projects; a project may touch multiple repos.
 - The **registry** (`Notes/Projects/_registry.md`) is the authoritative index of all active and archived projects.
 - Every change belongs to a project. The workflow: create a project note → plan collaboratively with the model → execute code changes once the plan is complete.
+- For note file operations, the canonical primitives are `pman read`, `pman write`, and `pman edit`. `cat/head/tail/wc/less` are notes-scoped wrappers for familiar ergonomics.
 
 ## Install
 
@@ -116,8 +117,86 @@ Moves:
 Options:
 - `--notes-dir <path>` overrides the Notes root.
 
+### read
+
+Read a note file relative to the Notes root.
+
+```sh
+pman read Projects/proj-22-some-project/README.md
+pman read Projects/proj-22-some-project/README.md --numbered
+pman read Projects/proj-22-some-project/README.md --lines 10:30 --numbered
+```
+
+Options:
+- `--notes-dir <path>` overrides the Notes root.
+- `--lines <start:end>` selects an inclusive 1-based line range.
+- `--numbered` adds line numbers to output.
+
+### write
+
+Replace an entire note file.
+
+```sh
+pman write Projects/proj-22-some-project/README.md --content "# PROJ-22: Name"
+printf '# PROJ-22: Name\n' | pman write Projects/proj-22-some-project/README.md
+pman write Areas/team/notes.md --create-dirs --content "text"
+```
+
+Options:
+- `--notes-dir <path>` overrides the Notes root.
+- `--create-dirs` creates missing parent directories.
+- `--content <text>` writes explicit content; if omitted, stdin is used.
+
+### edit
+
+Replace an inclusive line range within a note.
+
+```sh
+pman edit Projects/proj-22-some-project/README.md --replace-lines 20:25 --with "new text"
+pman edit Projects/proj-22-some-project/README.md --replace-lines 20:25 --with "new text" --expect "old text"
+```
+
+Options:
+- `--notes-dir <path>` overrides the Notes root.
+- `--replace-lines <start:end>` selects the inclusive range to replace.
+- `--with <text>` sets replacement text.
+- `--expect <text>` guards against stale context by requiring exact current text in the selected range.
+
+### cat/head/tail/wc/less
+
+Notes-scoped wrappers that resolve paths from Notes root and enforce containment:
+
+```sh
+pman cat Projects/proj-22-some-project/README.md
+pman head Projects/proj-22-some-project/README.md --lines 40
+pman tail Projects/proj-22-some-project/README.md --lines 40
+pman wc Projects/proj-22-some-project/README.md --lines --words
+pman less Projects/proj-22-some-project/README.md
+```
+
+Options:
+- All support `--notes-dir <path>`.
+- `head` and `tail` support `--lines <n>` (default `10`).
+- `wc` supports `--lines`, `--words`, `--bytes`, `--chars`.
+
+Behavior:
+- `less` automatically degrades to non-interactive `cat` behavior when no TTY is present.
+
+### skill generate
+
+Print a complete `SKILL.md` template to stdout.
+
+```sh
+pman skill generate para-notes-io > .claude/skills/para-notes-io/SKILL.md
+pman skill generate para-notes-io --notes-dir ~/Notes > /tmp/SKILL.md
+```
+
+Options:
+- `--notes-dir <path>` injects a notes-dir hint into generated examples.
+
 ## Notes
 
 - Slugs are derived from the project name (ASCII alnum, dash-separated).
 - Slugs are unique across both `Projects` and `Archives/Projects`.
 - Area slugs are optional; when set, they become a prefix in the directory slug.
+- Note I/O commands resolve and canonicalize paths from the Notes root, rejecting out-of-root targets.
