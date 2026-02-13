@@ -38,7 +38,6 @@ Creates:
 - `Notes/Projects/_registry.md` with header template
 - `CLAUDE.md` (generic workflow rules)
 - `.claude/skills/para-notes/SKILL.md`
-- `.claude/skills/project-structure/SKILL.md`
 
 Behavior:
 - Skips any file or directory that already exists (never overwrites)
@@ -56,7 +55,6 @@ pman update --path ~/src # specific path
 Updates:
 - `CLAUDE.md`
 - `.claude/skills/para-notes/SKILL.md`
-- `.claude/skills/project-structure/SKILL.md`
 
 Behavior:
 - Always overwrites (these files are generic; user config belongs in README.md)
@@ -76,7 +74,6 @@ Checks:
 - `Notes/Projects/_registry.md`
 - `CLAUDE.md`
 - `.claude/skills/para-notes/SKILL.md`
-- `.claude/skills/project-structure/SKILL.md`
 
 Behavior:
 - Reports ✓ for present items, ✗ for missing
@@ -187,12 +184,12 @@ Behavior:
 Print a complete `SKILL.md` template to stdout.
 
 ```sh
-pman skill generate para-notes-io > .claude/skills/para-notes-io/SKILL.md
-pman skill generate para-notes-io --notes-dir ~/Notes > /tmp/SKILL.md
+pman skill generate > .claude/skills/para-notes/SKILL.md
+pman skill generate para-notes > .claude/skills/para-notes/SKILL.md
 ```
 
 Options:
-- `--notes-dir <path>` injects a notes-dir hint into generated examples.
+- `<profile>` is optional and defaults to `para-notes`.
 
 ## Notes
 

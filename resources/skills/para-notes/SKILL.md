@@ -1,7 +1,7 @@
 ---
 name: para-notes
-description: Managing notes using the PARA method (Projects, Areas, Resources, Archives). Use when creating project notes, organizing notes, searching notes, working with proj-XXXX prefixed projects, or tracking SDLC progress.
-allowed-tools: Bash(pman:*), Bash(fd:*), Bash(rg:*), Read, Write, Edit
+description: Managing notes with PARA and understanding workspace/project boundaries. Use when creating project notes, navigating repositories, organizing notes, searching notes, or tracking SDLC progress.
+allowed-tools: Bash(pman:*), Bash(fd:*), Bash(rg:*), Bash(ls:*), Read, Write, Edit
 ---
 
 # PARA Notes
@@ -76,6 +76,28 @@ pman less Projects/proj-98-example/README.md
 1. Check `Notes/Projects/` for an existing project note
 2. If present, update it rather than creating a new one
 3. Use `pman new` only when starting genuinely new work
+
+## Workspace And Project Boundaries
+
+- Each project subdirectory is typically its own git repository.
+- The workspace root may not be a git repository.
+- Read each repository's `README.md` before making changes.
+- Check for project-specific `CLAUDE.md` files.
+- Use the build and test commands specified by each repository's README.
+
+Projects vs repositories:
+- A repository is a codebase.
+- A project (PARA) is a time-bound effort.
+- A project may span multiple repositories.
+
+When making a code change in any repository, keep project-note tracking in `Notes/Projects/`.
+
+Cross-project references can use relative paths, for example:
+
+```text
+../sibling-project/src/
+../../other-org/shared-lib/
+```
 
 ## Searching Notes
 

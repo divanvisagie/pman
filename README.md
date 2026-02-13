@@ -97,12 +97,11 @@ Claude reads both files, combining generic workflow with your specific setup.
 
 ### Skills
 
-Claude Code skills extend capabilities for specific workflows. This repo includes two skills in `resources/skills/`:
+Claude Code skills extend capabilities for specific workflows. This repo includes one merged skill in `resources/skills/`:
 
-| Skill               | Purpose                                         |
-| ------------------- | ----------------------------------------------- |
-| `para-notes`        | PARA note management, project notes, pman usage |
-| `project-structure` | Workspace navigation, project boundaries        |
+| Skill        | Purpose                                                                        |
+| ------------ | ------------------------------------------------------------------------------ |
+| `para-notes` | PARA note management, note I/O commands, and workspace/project boundary guidance |
 
 Install to your workspace's `.claude/skills/` directory:
 

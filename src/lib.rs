@@ -12,7 +12,6 @@ const REGISTRY_HEADER: &str = "# Project Registry\n\nFlat list of project notes.
 // Embedded resources
 const CLAUDE_MD: &str = include_str!("../resources/CLAUDE.md");
 const PARA_NOTES_SKILL: &str = include_str!("../resources/skills/para-notes/SKILL.md");
-const PROJECT_STRUCTURE_SKILL: &str = include_str!("../resources/skills/project-structure/SKILL.md");
 
 #[derive(Debug, Clone, Copy, Default)]
 pub struct WcFlags {
@@ -275,10 +274,10 @@ pub fn less_note(notes_dir: Option<PathBuf>, path: &Path) -> Result<Option<Strin
     }
 }
 
-pub fn generate_skill(profile: &str, notes_dir: Option<PathBuf>) -> Result<String> {
+pub fn generate_skill(profile: &str) -> Result<String> {
     match profile {
-        "para-notes-io" => Ok(generate_para_notes_io_skill(notes_dir)),
-        _ => bail!("Unknown profile {profile}; supported profiles: para-notes-io"),
+        "para-notes" => Ok(generate_para_notes_skill()),
+        _ => bail!("Unknown profile {profile}; supported profiles: para-notes"),
     }
 }
 
@@ -451,44 +450,8 @@ fn ensure_contained(root: &Path, target: &Path) -> Result<()> {
     )
 }
 
-fn generate_para_notes_io_skill(notes_dir: Option<PathBuf>) -> String {
-    let notes_flag = notes_dir
-        .map(|path| format!(" --notes-dir {}", path.display()))
-        .unwrap_or_default();
-    format!(
-        r#"---
-name: para-notes-io
-description: Use pman note I/O commands for scoped note reads and edits from any working directory.
-allowed-tools: Bash(pman:*), Bash(fd:*), Bash(rg:*)
----
-
-# PARA Notes I/O
-
-Use `pman` subcommands for note file operations so paths are always resolved from the Notes root and remain containment-safe.
-
-## Preferred primitives
-
-```bash
-pman read <path>{notes_flag} --numbered
-pman edit <path>{notes_flag} --replace-lines <start:end> --with "<text>" --expect "<old>"
-pman write <path>{notes_flag} --content "<full-document>"
-```
-
-Use `pman write` for deterministic full rewrites, and `pman edit` for line-range patches.
-
-## Inspection wrappers
-
-```bash
-pman cat <path>{notes_flag}
-pman head <path>{notes_flag} --lines 40
-pman tail <path>{notes_flag} --lines 40
-pman wc <path>{notes_flag} --lines --words
-pman less <path>{notes_flag}
-```
-
-These wrappers are convenience aliases; prefer `pman read` when line-numbered planning is needed.
-"#
-    )
+fn generate_para_notes_skill() -> String {
+    PARA_NOTES_SKILL.to_string()
 }
 
 pub fn create_project(
@@ -850,7 +813,6 @@ pub fn init_workspace(workspace: &Path) -> Result<()> {
     // Create skills
     let skills = [
         (workspace.join(".claude").join("skills").join("para-notes").join("SKILL.md"), PARA_NOTES_SKILL),
-        (workspace.join(".claude").join("skills").join("project-structure").join("SKILL.md"), PROJECT_STRUCTURE_SKILL),
     ];
 
     for (path, content) in &skills {
@@ -916,7 +878,6 @@ pub fn verify_workspace(workspace: &Path) -> Result<bool> {
     // Check skills
     let skills = [
         (".claude/skills/para-notes/SKILL.md", workspace.join(".claude").join("skills").join("para-notes").join("SKILL.md")),
-        (".claude/skills/project-structure/SKILL.md", workspace.join(".claude").join("skills").join("project-structure").join("SKILL.md")),
     ];
 
     for (name, path) in &skills {
@@ -952,7 +913,6 @@ pub fn update_workspace(workspace: &Path) -> Result<()> {
     // Update skills
     let skills = [
         (workspace.join(".claude").join("skills").join("para-notes").join("SKILL.md"), PARA_NOTES_SKILL),
-        (workspace.join(".claude").join("skills").join("project-structure").join("SKILL.md"), PROJECT_STRUCTURE_SKILL),
     ];
 
     for (path, content) in &skills {
@@ -1188,9 +1148,9 @@ mod tests {
     }
 
     #[test]
-    fn generate_skill_supports_para_notes_io() {
-        let output = generate_skill("para-notes-io", None).unwrap();
-        assert!(output.contains("name: para-notes-io"));
+    fn generate_skill_supports_para_notes() {
+        let output = generate_skill("para-notes").unwrap();
+        assert!(output.contains("name: para-notes"));
         assert!(output.contains("pman read"));
         assert!(output.contains("pman edit"));
     }

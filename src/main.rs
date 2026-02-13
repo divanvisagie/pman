@@ -172,11 +172,9 @@ enum Commands {
 enum SkillCommands {
     /// Print a complete SKILL.md template to stdout
     Generate {
-        /// Profile to generate (e.g. para-notes-io)
+        /// Profile to generate (default: para-notes)
+        #[arg(default_value = "para-notes")]
         profile: String,
-        /// Optional notes root path hint for examples
-        #[arg(long)]
-        notes_dir: Option<PathBuf>,
     },
 }
 
@@ -316,8 +314,8 @@ fn main() -> Result<()> {
             }
         }
         Commands::Skill { command } => match command {
-            SkillCommands::Generate { profile, notes_dir } => {
-                let output = generate_skill(&profile, notes_dir)?;
+            SkillCommands::Generate { profile } => {
+                let output = generate_skill(&profile)?;
                 print!("{output}");
             }
         },

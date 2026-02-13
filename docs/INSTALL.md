@@ -44,7 +44,6 @@ Place at: `./CLAUDE.md`
 Download the skills directories from:
 ```
 https://github.com/divanvisagie/pman/tree/master/resources/skills/para-notes
-https://github.com/divanvisagie/pman/tree/master/resources/skills/project-structure
 ```
 
 Or clone the repo and copy:
@@ -72,8 +71,7 @@ After setup, verify:
 1. `./Notes/Projects/_registry.md` exists
 2. `./CLAUDE.md` exists
 3. `./.claude/skills/para-notes/SKILL.md` exists
-4. `./.claude/skills/project-structure/SKILL.md` exists
-5. `pman --help` works (if CLI installed)
+4. `pman --help` works (if CLI installed)
 
 ## User README
 
