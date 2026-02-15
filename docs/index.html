@@ -23,30 +23,30 @@
       <h2 class="subtitle">Project Workflow Manual</h2>
 
       <p>
-        pman is an opinionated workflow for agentic programming with Claude Code.
+        pman is an opinionated workflow for agentic programming.
       </p>
 
       <p>
         LLMs are great at generating code and iterating through implementation problems,
         but they struggle with context. Context is the hardest part of software development.
-        pman flips the dynamic: you become the context manager, while Claude focuses on
+        pman flips the dynamic: you become the context manager, while your coding agent focuses on
         code, frameworks, and documentation. Each plays to their strength.
       </p>
 
       <p>
         The key insight is that most file changes happen through the agent chat as an
         intermediary. Instead of editing files or running commands directly, you work
-        through Claude. Because Claude is configured with the workflow rules via
+        through your coding agent. Because the agent is configured with the workflow rules via
         <code>AGENTS.md</code> and skills, it enforces conventions automatically: creating
         project notes before coding, updating the registry, following commit formats. You
-        describe intent; Claude handles execution within the established structure.
+        describe intent; the agent handles execution within the established structure.
       </p>
 
       <p>
         This doesn't mean you can't edit files directly. Sketch out pseudocode in vim,
         tweak a config by hand, or use whatever tool fits the moment. The workflow is
-        interactive: when you make changes outside the chat, tell Claude to look at what
-        you did. Claude, your editor, and any other tool are tools in the toolbox—not the
+        interactive: when you make changes outside the chat, tell your agent to look at what
+        you did. Your agent, your editor, and any other tool are tools in the toolbox—not the
         entire toolbox.
       </p>
 
@@ -59,10 +59,9 @@
       </p>
 
       <p>
-        <strong>Agent compatibility:</strong> This workflow is developed and tested exclusively
-        with Claude Code. It may work with other AI coding agents, but I only test with Claude
-        and have found it to be the most effective for this style of work. The workflow, prompts,
-        and tooling are optimized for Claude's capabilities.
+        <strong>Agent compatibility:</strong> This workflow is designed for coding agents that can
+        read workspace guidance files and skills. pman keeps canonical rules in <code>AGENTS.md</code>
+        and provides bridge symlinks for supported CLIs such as Claude and Codex.
       </p>
 
       <p>
@@ -75,12 +74,12 @@
 
       <ol>
         <li>Create a workspace directory (e.g., <code>~/src</code>, <code>~/code</code>, whatever you prefer)</li>
-        <li>Start Claude Code in that directory</li>
-        <li>Tell Claude: <em>"set up <a href="INSTALL.md">https://divanv.com/pman/INSTALL.md</a>"</em></li>
+        <li>Start your coding agent in that directory</li>
+        <li>Tell your agent: <em>"set up <a href="INSTALL.md">https://divanv.com/pman/INSTALL.md</a>"</em></li>
       </ol>
 
       <p>
-        Claude will read the install instructions and configure your workspace automatically.
+        Your coding agent will read the install instructions and configure your workspace automatically.
         The setup works in any directory—it becomes your workspace root.
       </p>
 
@@ -103,13 +102,13 @@
 
       <p>
         <strong>Plan before you code.</strong> Every change starts in a project note, not in the codebase.
-        You and Claude collaborate on the plan in writing. Only after the plan is complete do you start coding.
+        You and your coding agent collaborate on the plan in writing. Only after the plan is complete do you start coding.
       </p>
 
 <pre><code class="language-mermaid">
 flowchart LR
     subgraph Workflow
-        A[Create Project Note] --> B[Plan with Claude]
+        A[Create Project Note] --> B[Plan with Agent]
         B -->|Update| N[(Project Note)]
         N --> C[Execute Code]
         C --> D[Record Outcomes]
@@ -125,7 +124,7 @@ flowchart LR
 
       <ol>
         <li><strong>Create a project note</strong>: <code>pman new</code> creates a project note in <code>Notes/Projects/</code> with a chronological <code>PROJ-&lt;n&gt;</code> id and slug.</li>
-        <li><strong>Plan collaboratively</strong>: Work with Claude to develop the plan <em>in the project note</em>. Goals, constraints, approach: all written down. The plan lives in the note, not in chat history.</li>
+        <li><strong>Plan collaboratively</strong>: Work with your coding agent to develop the plan <em>in the project note</em>. Goals, constraints, approach: all written down. The plan lives in the note, not in chat history.</li>
         <li><strong>Execute</strong>: Once the plan is complete, start writing code. The plan is the spec; follow it.</li>
         <li><strong>Record outcomes</strong>: Update the project note with what worked, what changed, and any follow-up tasks.</li>
         <li><strong>Archive</strong>: <code>pman archive</code> moves the project note to <code>Notes/Archives/Projects/</code> and updates the registry.</li>
@@ -138,25 +137,25 @@ flowchart LR
 <pre><code class="language-mermaid">
 sequenceDiagram
     actor User
-    participant Claude
+    participant Agent
     participant PN as Project Note
     participant Code as System
 
-    User->>Claude: I want to add feature X
-    Claude->>PN: Create project note
-    User->>Claude: Let's plan this
-    Claude->>PN: Write goals and approach
-    User->>Claude: What about edge cases?
-    Claude->>PN: Update plan
-    User->>Claude: Looks good, build it
-    Claude->>Code: Implement changes
-    Claude->>PN: Record outcomes
-    User->>Claude: Done, archive it
-    Claude->>PN: Move to Archives
+    User->>Agent: I want to add feature X
+    Agent->>PN: Create project note
+    User->>Agent: Let's plan this
+    Agent->>PN: Write goals and approach
+    User->>Agent: What about edge cases?
+    Agent->>PN: Update plan
+    User->>Agent: Looks good, build it
+    Agent->>Code: Implement changes
+    Agent->>PN: Record outcomes
+    User->>Agent: Done, archive it
+    Agent->>PN: Move to Archives
 </code></pre>
 
       <p>
-        Notice how Claude writes to the project note throughout. It does this based on
+        Notice how the agent writes to the project note throughout. It does this based on
         the instructions in AGENTS.md, but you may also want to explicitly tell it to
         write something down during your chat. The note becomes the single source of
         truth for <em>why</em> a change was made, while git records <em>what</em> changed.
@@ -221,8 +220,8 @@ sequenceDiagram
       <h3>AGENTS.md</h3>
 
       <p>
-        Generic workflow instructions for Claude. Contains workflow rules, commands, and boundaries.
-        Written as directives for Claude, not documentation for humans.
+        Generic workflow instructions for coding agents. Contains workflow rules, commands, and boundaries.
+        Written as directives for agents, not documentation for humans.
       </p>
 
 <pre><code>cp resources/AGENTS.md ./</code></pre>
@@ -238,12 +237,12 @@ sequenceDiagram
         <li>System-specific conventions</li>
       </ul>
 
-      <p>Claude reads both files, combining generic workflow with your specific setup.</p>
+      <p>Agents read both files, combining generic workflow with your specific setup.</p>
 
-      <h2>Claude Code Skills</h2>
+      <h2>Agent Skills</h2>
 
       <p>
-        Skills teach Claude about specific workflows. This repo includes one merged skill
+        Skills teach coding agents about specific workflows. This repo includes one merged skill
         in <code>resources/skills/</code>:
       </p>
 
@@ -273,19 +272,19 @@ cp resources/skills/para-notes/SKILL.md ./.pman/skills/para-notes/SKILL.md</code
       <h2>Keeping Things in Sync</h2>
 
       <p>
-        The <code>AGENTS.md</code> file is the contract between you and Claude. It defines
+        The <code>AGENTS.md</code> file is the contract between you and your coding agent. It defines
         commands, tools, structure, and workflow rules. Keep it up to date.
       </p>
 
       <p>
-        When Claude does something you don't like, ask it to update AGENTS.md directly:
+        When an agent does something you don't like, ask it to update AGENTS.md directly:
         <em>"Please add to AGENTS.md not to do X again."</em> This way, the lesson persists
         across sessions.
       </p>
 
       <p>
         Similarly, keep your project notes current. They're the shared context that makes
-        collaboration with Claude effective.
+        collaboration with coding agents effective.
       </p>
     </div>
   </div>

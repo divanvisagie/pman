@@ -1,6 +1,6 @@
 # pman Installation
 
-Instructions for Claude Code to set up the pman workflow in the current working directory.
+Instructions for a coding agent to set up the pman workflow in the current working directory.
 
 ## Preferred Setup (via CLI)
 

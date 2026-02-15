@@ -1,6 +1,6 @@
 # pman Workflow
 
-Instructions for Claude Code. User-specific paths and tools are in README.md.
+Instructions for coding agents. User-specific paths and tools are in README.md.
 
 ## Before Making Changes
 

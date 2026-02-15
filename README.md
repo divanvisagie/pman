@@ -1,16 +1,16 @@
 # pman
 
-`pman` is an opinionated workflow for agentic programming with Claude Code.
+`pman` is an opinionated workflow for agentic programming.
 
-LLMs are great at generating code and iterating through implementation problems, but they struggle with context. Context is the hardest part of software development. `pman` flips the dynamic: you become the context manager, while Claude focuses on code, frameworks, and documentation. Each plays to their strength.
+LLMs are great at generating code and iterating through implementation problems, but they struggle with context. Context is the hardest part of software development. `pman` flips the dynamic: you become the context manager, while your coding agent focuses on code, frameworks, and documentation. Each plays to their strength.
 
-The key insight is that most file changes happen through the agent chat as an intermediary. Instead of editing files or running commands directly, you work through Claude. Because Claude is configured with the workflow rules via `AGENTS.md` and skills, it enforces conventions automatically: creating project notes before coding, updating the registry, following commit formats. You describe intent; Claude handles execution within the established structure.
+The key insight is that most file changes happen through the agent chat as an intermediary. Instead of editing files or running commands directly, you work through your coding agent. Because the agent is configured with workflow rules via `AGENTS.md` and skills, it can enforce conventions automatically: creating project notes before coding, updating the registry, following commit formats. You describe intent; the agent handles execution within the established structure.
 
-This doesn't mean you can't edit files directly. Sketch out pseudocode in vim, tweak a config by hand, or use whatever tool fits the moment. The workflow is interactive: when you make changes outside the chat, tell Claude to look at what you did. Claude, your editor, and any other tool are tools in the toolbox—not the entire toolbox.
+This doesn't mean you can't edit files directly. Sketch out pseudocode in vim, tweak a config by hand, or use whatever tool fits the moment. The workflow is interactive: when you make changes outside the chat, tell your agent to look at what you did. Your agent, your editor, and any other tool are tools in the toolbox, not the entire toolbox.
 
 Unlike throwaway planning, `pman` treats plans as persistent artifacts, like source files, but managed in a separate, centralized Notes directory. By documenting every change, you build a reference set for future work. Changed service A and now service B needs updating? Pull in context from A's project note. The Notes vault becomes your cross-system memory.
 
-**Agent compatibility**: This workflow is developed and tested exclusively with Claude Code. It may work with other AI coding agents, but I only test with Claude and have found it to be the most effective for this style of work. The workflow, prompts, and tooling are optimized for Claude's capabilities.
+**Agent compatibility**: This workflow is designed to work with coding agents that can read workspace guidance files and skills. `pman` maintains canonical workflow rules in `AGENTS.md` and provides bridge symlinks for supported CLIs such as Claude and Codex.
 
 ## Glossary
 
@@ -30,14 +30,14 @@ Consistency without friction:
 - Notes stay aligned with the system.
 - Archives are predictable and searchable.
 - Tooling can rely on a stable filesystem shape.
-- You and Claude share the same context across the full project lifecycle.
+- You and your coding agent share the same context across the full project lifecycle.
 
 The result is a workspace that scales without becoming a mess.
 
 ## How the workflow works
 
 1. **Create a project note**: `pman new` creates a project note in `Notes/Projects/` with a chronological `PROJ-<n>` id and slug.
-2. **Plan collaboratively**: Work with Claude to develop the plan in the project note. Discuss goals, constraints, trade-offs, and approach. The plan lives in the note, not in chat history.
+2. **Plan collaboratively**: Work with your coding agent to develop the plan in the project note. Discuss goals, constraints, trade-offs, and approach. The plan lives in the note, not in chat history.
 3. **Execute**: Once the plan is complete, start writing code. The plan is the spec—follow it.
 4. **Record outcomes**: Update the project note with what worked, what changed, and any follow-up tasks.
 5. **Archive**: `pman archive` moves the project note to `Notes/Archives/Projects/` and updates the registry.
