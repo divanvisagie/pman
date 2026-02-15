@@ -23,45 +23,14 @@
       <h2 class="subtitle">Project Workflow Manual</h2>
 
       <p>
-        pman is an opinionated workflow for agentic programming.
+        AI coding is fast, but most teams still lose time: context disappears,
+        rationale gets buried in chat, and the same decisions get rehashed.
       </p>
 
       <p>
-        LLMs are great at generating code and iterating through implementation problems,
-        but they struggle with context. Context is the hardest part of software development.
-        pman flips the dynamic: you become the context manager, while your coding agent focuses on
-        code, frameworks, and documentation. Each plays to their strength.
-      </p>
-
-      <p>
-        The key insight is that most file changes happen through the agent chat as an
-        intermediary. Instead of editing files or running commands directly, you work
-        through your coding agent. Because the agent is configured with the workflow rules via
-        <code>AGENTS.md</code> and skills, it enforces conventions automatically: creating
-        project notes before coding, updating the registry, following commit formats. You
-        describe intent; the agent handles execution within the established structure.
-      </p>
-
-      <p>
-        This doesn't mean you can't edit files directly. Sketch out pseudocode in vim,
-        tweak a config by hand, or use whatever tool fits the moment. The workflow is
-        interactive: when you make changes outside the chat, tell your agent to look at what
-        you did. Your agent, your editor, and any other tool are tools in the toolbox—not the
-        entire toolbox.
-      </p>
-
-      <p>
-        Unlike throwaway planning, pman treats plans as persistent artifacts, like source files,
-        but managed in a separate, centralized Notes directory. By documenting every change,
-        you build a reference set for future work. Changed service A and now service B needs
-        updating? Pull in context from A's project note. The Notes vault becomes your
-        cross-system memory.
-      </p>
-
-      <p>
-        <strong>Agent compatibility:</strong> This workflow is designed for coding agents that can
-        read workspace guidance files and skills. pman keeps canonical rules in <code>AGENTS.md</code>
-        and provides bridge symlinks for supported CLIs such as Claude and Codex.
+        <strong>pman fixes that by turning context into files.</strong>
+        Every meaningful change starts as a project note, gets planned in writing,
+        and is archived when done. Your agent executes code; your notes preserve intent.
       </p>
 
       <p>
@@ -70,103 +39,69 @@
         <a href="https://raw.githubusercontent.com/divanvisagie/pman/master/resources/AGENTS.md" download>Download AGENTS.md</a>
       </p>
 
+      <h2>Why This Matters</h2>
+
+      <p>
+        Code survives. Chat context usually does not. By turning plans into artifacts
+        rather than transient conversation, future work gets easier because you can
+        always trace why changes happened. The project note becomes the single source
+        of truth for intent, while the code and git history record what changed.
+      </p>
+
+      <h2>What pman Does Today</h2>
+
+      <p>
+        The CLI covers the full project lifecycle. <code>pman init</code>,
+        <code>pman update</code>, and <code>pman verify</code> handle workspace bootstrap.
+        <code>pman new</code>, <code>pman list</code>, and <code>pman archive</code> manage
+        the project lifecycle from creation through completion. For note manipulation,
+        <code>read</code>, <code>write</code>, and <code>edit</code> provide precise I/O
+        primitives with line-range selection and stale-context guards, while
+        <code>cat</code>, <code>head</code>, <code>tail</code>, <code>wc</code>, and
+        <code>less</code> offer familiar Unix ergonomics scoped to the Notes root.
+        <code>pman skill generate</code> rounds things out with skill template generation.
+      </p>
+
+      <p>
+        Configuration is handled through <code>PMAN_NOTES_DIR</code>,
+        <code>PMAN_PROJECT_PREFIX</code>, canonical <code>AGENTS.md</code>, and
+        canonical skills under <code>.pman/skills/</code>. When <code>claude</code>
+        or <code>codex</code> CLIs are installed, pman creates bridge symlinks so
+        each agent consumes the same canonical files through its own convention.
+      </p>
+
       <h2>Quick Start</h2>
 
-      <ol>
-        <li>Create a workspace directory (e.g., <code>~/src</code>, <code>~/code</code>, whatever you prefer)</li>
-        <li>Start your coding agent in that directory</li>
-        <li>Tell your agent: <em>"set up <a href="INSTALL.md">https://divanv.com/pman/INSTALL.md</a>"</em></li>
-      </ol>
-
       <p>
-        Your coding agent will read the install instructions and configure your workspace automatically.
-        The setup works in any directory—it becomes your workspace root.
+        Pick a workspace directory, run <code>pman init .</code>, and start using your
+        coding agent to execute changes through project notes. That is the whole setup.
       </p>
 
-      <h2>Glossary</h2>
+<pre><code>cargo install --git https://github.com/divanvisagie/pman
+pman init .
+pman verify --path .
+pman new "My Feature" --status active</code></pre>
 
-      <table>
-        <tr><th>Term</th><th>Meaning</th></tr>
-        <tr><td>Project</td><td>Time-bound effort to achieve an outcome (feature, bugfix, refactor)</td></tr>
-        <tr><td>System</td><td>What the project changes—may span one or more repositories</td></tr>
-        <tr><td>Repository</td><td>A git repo containing code</td></tr>
-      </table>
+      <h2>Workflow In Five Steps</h2>
 
       <p>
-        A <strong>project</strong> changes a <strong>system</strong>.
-        A <strong>system</strong> is made of one or more <strong>repositories</strong>.
-        Projects live in <code>Notes/Projects/</code>, repositories live in the workspace.
-      </p>
-
-      <h2>The Core Idea</h2>
-
-      <p>
-        <strong>Plan before you code.</strong> Every change starts in a project note, not in the codebase.
-        You and your coding agent collaborate on the plan in writing. Only after the plan is complete do you start coding.
+        Every change starts with <code>pman new</code>, which creates a project note.
+        From there you refine scope and approach inside that note, then implement once
+        the plan is solid. When the work is done, capture outcomes and follow-ups in
+        the same note, and close it with <code>pman archive</code>.
       </p>
 
 <pre><code class="language-mermaid">
 flowchart LR
-    subgraph Workflow
-        A[Create Project Note] --> B[Plan with Agent]
-        B -->|Update| N[(Project Note)]
-        N --> C[Execute Code]
-        C --> D[Record Outcomes]
-        D -->|Update| N
-    end
-
+    A[New Project Note] --> B[Plan in Note]
+    B --> C[Implement]
+    C --> D[Record Outcomes]
     D --> E{Done?}
     E -->|No| B
     E -->|Yes| F[Archive]
 </code></pre>
 
-      <p>The workflow has five steps:</p>
-
-      <ol>
-        <li><strong>Create a project note</strong>: <code>pman new</code> creates a project note in <code>Notes/Projects/</code> with a chronological <code>PROJ-&lt;n&gt;</code> id and slug.</li>
-        <li><strong>Plan collaboratively</strong>: Work with your coding agent to develop the plan <em>in the project note</em>. Goals, constraints, approach: all written down. The plan lives in the note, not in chat history.</li>
-        <li><strong>Execute</strong>: Once the plan is complete, start writing code. The plan is the spec; follow it.</li>
-        <li><strong>Record outcomes</strong>: Update the project note with what worked, what changed, and any follow-up tasks.</li>
-        <li><strong>Archive</strong>: <code>pman archive</code> moves the project note to <code>Notes/Archives/Projects/</code> and updates the registry.</li>
-      </ol>
-
-      <h2>Example Session</h2>
-
-      <p>Here's how a typical session looks:</p>
-
-<pre><code class="language-mermaid">
-sequenceDiagram
-    actor User
-    participant Agent
-    participant PN as Project Note
-    participant Code as System
-
-    User->>Agent: I want to add feature X
-    Agent->>PN: Create project note
-    User->>Agent: Let's plan this
-    Agent->>PN: Write goals and approach
-    User->>Agent: What about edge cases?
-    Agent->>PN: Update plan
-    User->>Agent: Looks good, build it
-    Agent->>Code: Implement changes
-    Agent->>PN: Record outcomes
-    User->>Agent: Done, archive it
-    Agent->>PN: Move to Archives
-</code></pre>
-
-      <p>
-        Notice how the agent writes to the project note throughout. It does this based on
-        the instructions in AGENTS.md, but you may also want to explicitly tell it to
-        write something down during your chat. The note becomes the single source of
-        truth for <em>why</em> a change was made, while git records <em>what</em> changed.
-      </p>
-
-      <h2>Workspace Structure</h2>
-
-      <p>
-        pman expects a Notes directory following <a href="https://fortelabs.com/blog/para/">PARA</a>
-        (Projects, Areas, Resources, Archives):
-      </p>
+      <h2>Workspace Model</h2>
 
 <pre><code>Notes/
   Projects/
@@ -177,120 +112,37 @@ sequenceDiagram
     Projects/</code></pre>
 
       <p>
-        The workspace structure for your repositories is up to you—document it in your
-        workspace <code>README.md</code>.
+        The registry at <code>Notes/Projects/_registry.md</code> is the authoritative index
+        for active and archived projects.
       </p>
 
-      <p>Key concepts:</p>
-
-      <ul>
-        <li><strong>Registry</strong>: <code>Notes/Projects/_registry.md</code> is the authoritative index of all projects, active and archived.</li>
-        <li><strong>Deterministic slugs</strong>: Each project gets a unique slug like <code>proj-22-my-feature</code>. Slugs make projects easy to reference in conversation and across notes.</li>
-      </ul>
-
-      <h2>CLI Setup</h2>
-
-      <p>Use the pman CLI to bootstrap the workspace in the current directory:</p>
-
-      <ol>
-        <li>Install the CLI: <code>cargo install --git https://github.com/divanvisagie/pman</code>.</li>
-        <li>Initialize workspace files: <code>pman init .</code>.</li>
-        <li>Verify setup: <code>pman verify --path .</code>.</li>
-        <li>Create a <code>README.md</code> documenting your workspace layout and custom tools.</li>
-      </ol>
-
-      <p>See <a href="INSTALL.md">INSTALL.md</a> for the agent setup instructions.</p>
-
-      <h2>Install the CLI</h2>
-
-<pre><code>cargo install --git https://github.com/divanvisagie/pman</code></pre>
-
-      <p>Create a new project:</p>
-
-<pre><code>pman new "My Feature" --status active</code></pre>
-
-      <p>Archive a completed project:</p>
-
-<pre><code>pman archive proj-22</code></pre>
-
-      <h2>Configuration</h2>
-
-      <p>pman ships two types of configuration files:</p>
-
-      <h3>AGENTS.md</h3>
+      <h2>Configuration Model</h2>
 
       <p>
-        Generic workflow instructions for coding agents. Contains workflow rules, commands, and boundaries.
-        Written as directives for agents, not documentation for humans.
+        pman keeps agent guidance in <code>AGENTS.md</code> and skills in
+        <code>.pman/skills/</code>. If supported CLIs are installed, pman creates bridge
+        symlinks so those tools consume the same canonical files.
       </p>
 
-<pre><code>cp resources/AGENTS.md ./</code></pre>
-
-      <h3>README.md (user-maintained)</h3>
-
-      <p>Your workspace-specific configuration. Document your:</p>
-
-      <ul>
-        <li>Directory layout and organization</li>
-        <li>Custom tools and commands</li>
-        <li>Project creation workflow</li>
-        <li>System-specific conventions</li>
-      </ul>
-
-      <p>Agents read both files, combining generic workflow with your specific setup.</p>
-
-      <h2>Agent Skills</h2>
-
-      <p>
-        Skills teach coding agents about specific workflows. This repo includes one merged skill
-        in <code>resources/skills/</code>:
-      </p>
-
-      <ul>
-        <li><strong>para-notes</strong>: PARA note management, note I/O commands, and workspace/project boundary guidance</li>
-      </ul>
-
-      <p>Canonical install path is <code>.pman/skills/</code>:</p>
-
-<pre><code>mkdir -p ./.pman/skills/para-notes
-cp resources/skills/para-notes/SKILL.md ./.pman/skills/para-notes/SKILL.md</code></pre>
-
-      <p>When supported CLIs are installed, pman creates bridge symlinks:</p>
-
-<pre><code>CLAUDE.md -> AGENTS.md
+<pre><code>AGENTS.md
+.pman/skills/para-notes/SKILL.md
+CLAUDE.md -> AGENTS.md
 .claude/skills/para-notes -> .pman/skills/para-notes
 .codex/skills/para-notes -> .pman/skills/para-notes</code></pre>
 
       <h2>Upgrading</h2>
 
-      <p>Because <code>AGENTS.md</code> and skills are generic, upgrading is simple:</p>
-
 <pre><code>pman update --path .</code></pre>
 
-      <p>Your <code>README.md</code> stays untouched—no merge conflicts.</p>
-
-      <h2>Keeping Things in Sync</h2>
-
       <p>
-        The <code>AGENTS.md</code> file is the contract between you and your coding agent. It defines
-        commands, tools, structure, and workflow rules. Keep it up to date.
-      </p>
-
-      <p>
-        When an agent does something you don't like, ask it to update AGENTS.md directly:
-        <em>"Please add to AGENTS.md not to do X again."</em> This way, the lesson persists
-        across sessions.
-      </p>
-
-      <p>
-        Similarly, keep your project notes current. They're the shared context that makes
-        collaboration with coding agents effective.
+        This refreshes embedded workflow resources while leaving your workspace
+        <code>README.md</code> untouched.
       </p>
     </div>
   </div>
 
   <footer>
-    Divan Visagie &bull; Copyright 2019-25 &bull;
+    Divan Visagie &bull; Copyright 2019-26 &bull;
     <a href="mailto:me@divanv.com">me@divanv.com</a> &bull;
     <span><a href="/cv">CV</a></span> &bull;
     <span><a href="https://github.com/divanvisagie">GitHub</a></span> &bull;

@@ -24,23 +24,13 @@ A **project** changes a **system**. A **system** is made of one or more **reposi
 
 ## What this gives you
 
-Consistency without friction:
-
-- Projects are always created the same way.
-- Notes stay aligned with the system.
-- Archives are predictable and searchable.
-- Tooling can rely on a stable filesystem shape.
-- You and your coding agent share the same context across the full project lifecycle.
-
-The result is a workspace that scales without becoming a mess.
+Consistency without friction. Projects are always created the same way, notes stay aligned with the system, and archives are predictable and searchable. Tooling can rely on a stable filesystem shape, and you and your coding agent share the same context across the full project lifecycle. The result is a workspace that scales without becoming a mess.
 
 ## How the workflow works
 
-1. **Create a project note**: `pman new` creates a project note in `Notes/Projects/` with a chronological `PROJ-<n>` id and slug.
-2. **Plan collaboratively**: Work with your coding agent to develop the plan in the project note. Discuss goals, constraints, trade-offs, and approach. The plan lives in the note, not in chat history.
-3. **Execute**: Once the plan is complete, start writing code. The plan is the spec—follow it.
-4. **Record outcomes**: Update the project note with what worked, what changed, and any follow-up tasks.
-5. **Archive**: `pman archive` moves the project note to `Notes/Archives/Projects/` and updates the registry.
+Every change starts with `pman new`, which creates a project note in `Notes/Projects/` with a chronological `PROJ-<n>` id and slug. From there you plan collaboratively: work with your coding agent to develop goals, constraints, trade-offs, and approach inside the project note. The plan lives in the note, not in chat history.
+
+Once the plan is complete, start writing code. The plan is the spec -- follow it. When the work is done, update the project note with what worked, what changed, and any follow-up tasks. Finally, `pman archive` moves the project note to `Notes/Archives/Projects/` and updates the registry.
 
 The registry (`Notes/Projects/_registry.md`) is the authoritative index of active and archived projects.
 
@@ -86,14 +76,7 @@ Contains: workflow rules, commands, boundaries. Written as directives for coding
 
 ### README.md (user-maintained)
 
-Your workspace-specific configuration. Document your:
-
-- Directory layout and organization
-- Custom tools and commands
-- Project creation workflow
-- System-specific conventions
-
-Agents read both files, combining generic workflow with your specific setup.
+Your workspace-specific configuration. Document your directory layout, custom tools and commands, project creation workflow, and system-specific conventions. Agents read both files, combining generic workflow with your specific setup.
 
 ### Skills
 
@@ -110,11 +93,7 @@ mkdir -p ./.pman/skills/para-notes
 cp resources/skills/para-notes/SKILL.md ./.pman/skills/para-notes/SKILL.md
 ```
 
-When supported agent CLIs are installed, `pman init`/`pman update` create bridge symlinks:
-
-- `CLAUDE.md` -> `AGENTS.md` (when `claude` is installed)
-- `.claude/skills/para-notes` -> `.pman/skills/para-notes` (when `claude` is installed)
-- `.codex/skills/para-notes` -> `.pman/skills/para-notes` (when `codex` is installed)
+When supported agent CLIs are installed, `pman init` and `pman update` create bridge symlinks automatically. For Claude, that means `CLAUDE.md` pointing to `AGENTS.md` and `.claude/skills/para-notes` pointing to the canonical `.pman/skills/para-notes` directory. Codex gets the same treatment with `.codex/skills/para-notes`. You maintain one set of files; each agent reads them through its own convention.
 
 ## Upgrading
 
@@ -128,13 +107,4 @@ Your `README.md` stays untouched—no merge conflicts.
 
 ## Contributing
 
-When updating this README, ensure the following files stay in sync:
-
-- `docs/index.html`: The HTML manual mirrors the README content
-- `resources/AGENTS.md`: The template should reflect current workflow guidance
-
-## Roadmap
-
-- `init` command: wizard to set up workspace and Notes directory
-- `verify` command: check workspace structure and configuration
-- `list` and `status` commands for project reporting
+When updating this README, ensure `docs/index.html` and `resources/AGENTS.md` stay in sync. The HTML manual mirrors the README content, and the template should reflect current workflow guidance.
