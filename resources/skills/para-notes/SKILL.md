@@ -17,19 +17,35 @@ The Notes directory is organized using the PARA method.
 | Resources/ | Reference materials                                  |
 | Archives/  | Inactive items from other categories                 |
 
+## Bootstrap
+
+If `pman` is not available in the workspace, install and initialize with:
+
+```bash
+cargo install --git https://github.com/divanvisagie/pman
+pman init .
+```
+
 ## Creating Project Notes
 
 Use `pman` to create and manage project notes:
 
 ```bash
+pman list                        # active projects
+pman list --status all           # all statuses
 pman new "Project Name" --status active
 pman new "Feature Work" --area some-repo
+pman new z2222-lol-cats          # explicit project directory name
 pman archive proj-XX
 ```
 
-This creates:
-- `Projects/proj-<n>-<slug>/README.md`
-- Entry in `Projects/_registry.md`
+`pman new` behavior:
+- Standard mode (`"Project Name"`): creates `Projects/proj-<n>-<slug>/README.md`.
+- Explicit mode (`z2222-lol-cats`): if name is slug-like (contains `-`, no spaces), uses that exact directory name.
+- Explicit mode sets ID from explicit name (`MYSLUG-1192` for `myslug-1192-mythingy`; otherwise uppercased full name, e.g. `Z2222-LOL-CATS`).
+- Explicit mode does not support `--area`.
+
+All modes append an entry to `Projects/_registry.md`.
 
 ## Note I/O From Any Directory
 
@@ -56,7 +72,7 @@ pman less Projects/proj-98-example/README.md
 ## Project Note Template
 
 ```markdown
-# PROJ-XX: Name
+# <ID>: Name
 
 ## Summary
 -
@@ -73,16 +89,17 @@ pman less Projects/proj-98-example/README.md
 
 ## Before Starting Work
 
-1. Check `Notes/Projects/` for an existing project note
-2. If present, update it rather than creating a new one
-3. Use `pman new` only when starting genuinely new work
+1. List active projects with `pman list`
+2. Check `Notes/Projects/` for an existing project note
+3. If present, update it rather than creating a new one
+4. Use `pman new` only when starting genuinely new work
 
 ## Workspace And Project Boundaries
 
 - Each project subdirectory is typically its own git repository.
 - The workspace root may not be a git repository.
 - Read each repository's `README.md` before making changes.
-- Check for project-specific `CLAUDE.md` files.
+- Check for project-specific `AGENTS.md` files.
 - Use the build and test commands specified by each repository's README.
 
 Projects vs repositories:
@@ -117,7 +134,7 @@ rg <pattern> Notes/          # Search contents
 ## Archiving
 
 ```bash
-pman archive proj-XX
+pman archive <project-prefix-or-dir-name>
 ```
 
 Moves the project to `Archives/Projects/` and updates the registry.

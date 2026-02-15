@@ -22,6 +22,29 @@ cd ~/src  # or any directory you want as workspace root
 pman init
 ```
 
+## Notes Root Resolution
+
+For commands that resolve the Notes root (`new`, `archive`, `read`, `write`, `edit`, `cat`, `head`, `tail`, `wc`, `less`), pman uses this precedence:
+
+1. `--notes-dir <path>`
+2. `PMAN_NOTES_DIR`
+3. Existing automatic discovery (`~/Notes`, then ancestor discovery)
+
+## Project Directory Prefix
+
+For `pman new`, the project directory prefix defaults to `proj`:
+
+- `Notes/Projects/proj-<n>-<slug>/README.md`
+
+Override it by setting `PMAN_PROJECT_PREFIX` to an ASCII alphanumeric value:
+
+```sh
+PMAN_PROJECT_PREFIX=ticket pman new "Example Project"
+# -> Notes/Projects/ticket-<n>-example-project/README.md
+```
+
+If `PMAN_PROJECT_PREFIX` is unset or empty, pman falls back to `proj`.
+
 ## Commands
 
 ### init
@@ -36,8 +59,10 @@ pman init ~/src        # specific path
 Creates:
 - `Notes/Projects/`, `Notes/Areas/`, `Notes/Resources/`, `Notes/Archives/Projects/`
 - `Notes/Projects/_registry.md` with header template
-- `CLAUDE.md` (generic workflow rules)
-- `.claude/skills/para-notes/SKILL.md`
+- `AGENTS.md` (generic workflow rules)
+- `.pman/skills/para-notes/SKILL.md` (canonical skill install)
+- If `claude` is installed: `CLAUDE.md` -> `AGENTS.md` and `.claude/skills/para-notes` -> `.pman/skills/para-notes`
+- If `codex` is installed: `.codex/skills/para-notes` -> `.pman/skills/para-notes`
 
 Behavior:
 - Skips any file or directory that already exists (never overwrites)
@@ -45,7 +70,7 @@ Behavior:
 
 ### update
 
-Update CLAUDE.md and skills to the versions embedded in your pman binary.
+Update AGENTS.md and canonical skills to the versions embedded in your pman binary.
 
 ```sh
 pman update              # current directory
@@ -53,8 +78,9 @@ pman update --path ~/src # specific path
 ```
 
 Updates:
-- `CLAUDE.md`
-- `.claude/skills/para-notes/SKILL.md`
+- `AGENTS.md`
+- `.pman/skills/para-notes/SKILL.md`
+- Agent bridge symlinks for installed CLIs (`claude`, `codex`)
 
 Behavior:
 - Always overwrites (these files are generic; user config belongs in README.md)
@@ -72,8 +98,10 @@ pman verify --path ~/src # specific path
 Checks:
 - Notes directory structure (Projects, Areas, Resources, Archives/Projects)
 - `Notes/Projects/_registry.md`
-- `CLAUDE.md`
-- `.claude/skills/para-notes/SKILL.md`
+- `AGENTS.md`
+- `.pman/skills/para-notes/SKILL.md`
+- If `claude` is installed: `CLAUDE.md` -> `AGENTS.md` and `.claude/skills/para-notes` -> `.pman/skills/para-notes`
+- If `codex` is installed: `.codex/skills/para-notes` -> `.pman/skills/para-notes`
 
 Behavior:
 - Reports ✓ for present items, ✗ for missing
@@ -87,11 +115,17 @@ Create a new project note and registry entry.
 ```sh
 pman new "Project Name" --status active
 pman new "Runes Notes" --area religion
+pman new myslug-1192-mythingy
 ```
 
 Creates:
-- `Notes/Projects/proj-<n>-<slug>/README.md`
+- `Notes/Projects/<prefix>-<n>-<slug>/README.md` (default prefix: `proj`)
 - Appends an entry to the registry (`Notes/Projects/_registry.md`)
+
+Explicit name mode:
+- If the name is slug-like (no spaces, contains `-`), pman uses it as the project directory name (for example `myslug-1192-mythingy` or `z2222-lol-cats`).
+- In explicit mode, ID is derived from the explicit name (`MYSLUG-1192` for `myslug-1192-mythingy`; otherwise uppercased full name, e.g. `Z2222-LOL-CATS`) and `--area` is not supported.
+- If the directory already exists in Projects or Archives, creation fails with an error.
 
 Options:
 - `--status <status>` sets the registry status (default: `active`).
@@ -112,6 +146,20 @@ Moves:
 - Updates the registry (`Notes/Projects/_registry.md`) status to `archived` with the new path.
 
 Options:
+- `--notes-dir <path>` overrides the Notes root.
+
+### list
+
+List projects from the registry.
+
+```sh
+pman list                 # active projects
+pman list --status all    # all projects
+pman list --status archived
+```
+
+Options:
+- `--status <value>` filters by status. Default is `active`; use `all` to disable filtering.
 - `--notes-dir <path>` overrides the Notes root.
 
 ### read
@@ -184,8 +232,8 @@ Behavior:
 Print a complete `SKILL.md` template to stdout.
 
 ```sh
-pman skill generate > .claude/skills/para-notes/SKILL.md
-pman skill generate para-notes > .claude/skills/para-notes/SKILL.md
+pman skill generate > .pman/skills/para-notes/SKILL.md
+pman skill generate para-notes > .pman/skills/para-notes/SKILL.md
 ```
 
 Options:

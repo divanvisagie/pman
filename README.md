@@ -4,7 +4,7 @@
 
 LLMs are great at generating code and iterating through implementation problems, but they struggle with context. Context is the hardest part of software development. `pman` flips the dynamic: you become the context manager, while Claude focuses on code, frameworks, and documentation. Each plays to their strength.
 
-The key insight is that most file changes happen through the agent chat as an intermediary. Instead of editing files or running commands directly, you work through Claude. Because Claude is configured with the workflow rules via `CLAUDE.md` and skills, it enforces conventions automatically: creating project notes before coding, updating the registry, following commit formats. You describe intent; Claude handles execution within the established structure.
+The key insight is that most file changes happen through the agent chat as an intermediary. Instead of editing files or running commands directly, you work through Claude. Because Claude is configured with the workflow rules via `AGENTS.md` and skills, it enforces conventions automatically: creating project notes before coding, updating the registry, following commit formats. You describe intent; Claude handles execution within the established structure.
 
 This doesn't mean you can't edit files directly. Sketch out pseudocode in vim, tweak a config by hand, or use whatever tool fits the moment. The workflow is interactive: when you make changes outside the chat, tell Claude to look at what you did. Claude, your editor, and any other tool are tools in the toolbox—not the entire toolbox.
 
@@ -72,17 +72,17 @@ See [`docs/cli.md`](docs/cli.md) for CLI install and command reference.
 
 ## Configuration
 
-`pman` ships two types of configuration files:
+`pman` ships a generic agent rules file plus a user-maintained workspace README:
 
-### CLAUDE.md
+### AGENTS.md
 
-Generic workflow instructions for Claude. Place at your workspace root.
+Generic workflow instructions for agentic coding tools. Place at your workspace root.
 
 ```sh
-cp resources/CLAUDE.md ./
+cp resources/AGENTS.md ./
 ```
 
-Contains: workflow rules, commands, boundaries. Written as directives for Claude, not documentation for humans.
+Contains: workflow rules, commands, boundaries. Written as directives for coding agents, not documentation for humans.
 
 ### README.md (user-maintained)
 
@@ -93,32 +93,35 @@ Your workspace-specific configuration. Document your:
 - Project creation workflow
 - System-specific conventions
 
-Claude reads both files, combining generic workflow with your specific setup.
+Agents read both files, combining generic workflow with your specific setup.
 
 ### Skills
 
-Claude Code skills extend capabilities for specific workflows. This repo includes one merged skill in `resources/skills/`:
+Skills extend capabilities for specific workflows. This repo includes one merged skill in `resources/skills/`:
 
 | Skill        | Purpose                                                                        |
 | ------------ | ------------------------------------------------------------------------------ |
 | `para-notes` | PARA note management, note I/O commands, and workspace/project boundary guidance |
 
-Install to your workspace's `.claude/skills/` directory:
+Canonical skill install path:
 
 ```sh
-mkdir -p ./.claude/skills
-cp -r resources/skills/* ./.claude/skills/
-# or symlink for automatic updates:
-ln -s /path/to/pman/resources/skills/* ./.claude/skills/
+mkdir -p ./.pman/skills/para-notes
+cp resources/skills/para-notes/SKILL.md ./.pman/skills/para-notes/SKILL.md
 ```
+
+When supported agent CLIs are installed, `pman init`/`pman update` create bridge symlinks:
+
+- `CLAUDE.md` -> `AGENTS.md` (when `claude` is installed)
+- `.claude/skills/para-notes` -> `.pman/skills/para-notes` (when `claude` is installed)
+- `.codex/skills/para-notes` -> `.pman/skills/para-notes` (when `codex` is installed)
 
 ## Upgrading
 
-Because `CLAUDE.md` and skills are generic, upgrading is simple:
+Because `AGENTS.md` and skills are generic, upgrading is simple:
 
 ```sh
-cp resources/CLAUDE.md ./
-cp -r resources/skills/* ./.claude/skills/
+pman update --path .
 ```
 
 Your `README.md` stays untouched—no merge conflicts.
@@ -128,7 +131,7 @@ Your `README.md` stays untouched—no merge conflicts.
 When updating this README, ensure the following files stay in sync:
 
 - `docs/index.html`: The HTML manual mirrors the README content
-- `resources/CLAUDE.md`: The template should reflect current workflow guidance
+- `resources/AGENTS.md`: The template should reflect current workflow guidance
 
 ## Roadmap
 

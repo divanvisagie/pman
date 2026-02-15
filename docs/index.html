@@ -37,7 +37,7 @@
         The key insight is that most file changes happen through the agent chat as an
         intermediary. Instead of editing files or running commands directly, you work
         through Claude. Because Claude is configured with the workflow rules via
-        <code>CLAUDE.md</code> and skills, it enforces conventions automatically: creating
+        <code>AGENTS.md</code> and skills, it enforces conventions automatically: creating
         project notes before coding, updating the registry, following commit formats. You
         describe intent; Claude handles execution within the established structure.
       </p>
@@ -68,7 +68,7 @@
       <p>
         <a href="https://github.com/divanvisagie/pman">GitHub README</a> •
         <a href="https://github.com/divanvisagie/pman/blob/master/docs/cli.md">CLI Reference</a> •
-        <a href="https://raw.githubusercontent.com/divanvisagie/pman/master/resources/CLAUDE.md" download>Download CLAUDE.md</a>
+        <a href="https://raw.githubusercontent.com/divanvisagie/pman/master/resources/AGENTS.md" download>Download AGENTS.md</a>
       </p>
 
       <h2>Quick Start</h2>
@@ -157,7 +157,7 @@ sequenceDiagram
 
       <p>
         Notice how Claude writes to the project note throughout. It does this based on
-        the instructions in CLAUDE.md, but you may also want to explicitly tell it to
+        the instructions in AGENTS.md, but you may also want to explicitly tell it to
         write something down during your chat. The note becomes the single source of
         truth for <em>why</em> a change was made, while git records <em>what</em> changed.
       </p>
@@ -189,20 +189,18 @@ sequenceDiagram
         <li><strong>Deterministic slugs</strong>: Each project gets a unique slug like <code>proj-22-my-feature</code>. Slugs make projects easy to reference in conversation and across notes.</li>
       </ul>
 
-      <h2>Manual Setup</h2>
+      <h2>CLI Setup</h2>
 
-      <p>If you prefer to set up manually instead of using Claude:</p>
+      <p>Use the pman CLI to bootstrap the workspace in the current directory:</p>
 
       <ol>
-        <li>Create a workspace directory for your projects.</li>
-        <li>Create a <code>Notes</code> directory with PARA folders (Projects, Areas, Resources, Archives).</li>
-        <li>Create <code>Notes/Projects/_registry.md</code> to track projects.</li>
-        <li>Download <a href="https://raw.githubusercontent.com/divanvisagie/pman/master/resources/CLAUDE.md">CLAUDE.md</a> and place it at your workspace root.</li>
-        <li>Copy skills to <code>./.claude/skills/</code>.</li>
+        <li>Install the CLI: <code>cargo install --git https://github.com/divanvisagie/pman</code>.</li>
+        <li>Initialize workspace files: <code>pman init .</code>.</li>
+        <li>Verify setup: <code>pman verify --path .</code>.</li>
         <li>Create a <code>README.md</code> documenting your workspace layout and custom tools.</li>
       </ol>
 
-      <p>See <a href="INSTALL.md">INSTALL.md</a> for detailed instructions and file contents.</p>
+      <p>See <a href="INSTALL.md">INSTALL.md</a> for the agent setup instructions.</p>
 
       <h2>Install the CLI</h2>
 
@@ -220,14 +218,14 @@ sequenceDiagram
 
       <p>pman ships two types of configuration files:</p>
 
-      <h3>CLAUDE.md</h3>
+      <h3>AGENTS.md</h3>
 
       <p>
         Generic workflow instructions for Claude. Contains workflow rules, commands, and boundaries.
         Written as directives for Claude, not documentation for humans.
       </p>
 
-<pre><code>cp resources/CLAUDE.md ./</code></pre>
+<pre><code>cp resources/AGENTS.md ./</code></pre>
 
       <h3>README.md (user-maintained)</h3>
 
@@ -253,32 +251,35 @@ sequenceDiagram
         <li><strong>para-notes</strong>: PARA note management, note I/O commands, and workspace/project boundary guidance</li>
       </ul>
 
-      <p>Install to your workspace's <code>.claude/skills/</code> directory:</p>
+      <p>Canonical install path is <code>.pman/skills/</code>:</p>
 
-<pre><code>mkdir -p ./.claude/skills
-cp -r resources/skills/* ./.claude/skills/
-# or symlink for automatic updates:
-ln -s /path/to/pman/resources/skills/* ./.claude/skills/</code></pre>
+<pre><code>mkdir -p ./.pman/skills/para-notes
+cp resources/skills/para-notes/SKILL.md ./.pman/skills/para-notes/SKILL.md</code></pre>
+
+      <p>When supported CLIs are installed, pman creates bridge symlinks:</p>
+
+<pre><code>CLAUDE.md -> AGENTS.md
+.claude/skills/para-notes -> .pman/skills/para-notes
+.codex/skills/para-notes -> .pman/skills/para-notes</code></pre>
 
       <h2>Upgrading</h2>
 
-      <p>Because <code>CLAUDE.md</code> and skills are generic, upgrading is simple:</p>
+      <p>Because <code>AGENTS.md</code> and skills are generic, upgrading is simple:</p>
 
-<pre><code>cp resources/CLAUDE.md ./
-cp -r resources/skills/* ./.claude/skills/</code></pre>
+<pre><code>pman update --path .</code></pre>
 
       <p>Your <code>README.md</code> stays untouched—no merge conflicts.</p>
 
       <h2>Keeping Things in Sync</h2>
 
       <p>
-        The <code>CLAUDE.md</code> file is the contract between you and Claude. It defines
+        The <code>AGENTS.md</code> file is the contract between you and Claude. It defines
         commands, tools, structure, and workflow rules. Keep it up to date.
       </p>
 
       <p>
-        When Claude does something you don't like, ask it to update CLAUDE.md directly:
-        <em>"Please add to CLAUDE.md not to do X again."</em> This way, the lesson persists
+        When Claude does something you don't like, ask it to update AGENTS.md directly:
+        <em>"Please add to AGENTS.md not to do X again."</em> This way, the lesson persists
         across sessions.
       </p>
 

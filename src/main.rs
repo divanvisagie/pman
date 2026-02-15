@@ -4,9 +4,9 @@ use std::io::Read;
 use std::path::PathBuf;
 
 use pman::{
-    archive_project, cat_note, create_project, edit_note, generate_skill, head_note,
-    init_workspace, less_note, read_note, resolve_notes_dir, tail_note, update_workspace,
-    verify_workspace, wc_note, write_note, NotesPaths, WcFlags,
+    NotesPaths, WcFlags, archive_project, cat_note, create_project, edit_note, generate_skill,
+    head_note, init_workspace, less_note, list_projects, read_note, resolve_notes_dir, tail_note,
+    update_workspace, verify_workspace, wc_note, write_note,
 };
 
 #[derive(Parser)]
@@ -24,7 +24,7 @@ enum Commands {
         #[arg(default_value = ".")]
         path: PathBuf,
     },
-    /// Update CLAUDE.md and skills to latest embedded versions
+    /// Update AGENTS.md and canonical skills to latest embedded versions
     Update {
         /// Workspace directory (default: current directory)
         #[arg(long, default_value = ".")]
@@ -38,7 +38,7 @@ enum Commands {
     },
     /// Create a new project note in Notes/Projects
     New {
-        /// Project name (used for title and slug)
+        /// Project name, or explicit project directory name (<prefix>-<number>-<slug>; default prefix: proj or PMAN_PROJECT_PREFIX)
         name: String,
         /// Status label to record in the registry
         #[arg(long, default_value = "active")]
@@ -52,8 +52,17 @@ enum Commands {
     },
     /// Archive a project directory into Notes/Archives/Projects
     Archive {
-        /// Project directory name or prefix (e.g. proj-0022)
+        /// Project directory name or prefix (e.g. proj-0022 or ticket-0022)
         project: String,
+        /// Override Notes root directory
+        #[arg(long)]
+        notes_dir: Option<PathBuf>,
+    },
+    /// List projects from the registry
+    List {
+        /// Filter by status (default: active, use 'all' for everything)
+        #[arg(long, default_value = "active")]
+        status: String,
         /// Override Notes root directory
         #[arg(long)]
         notes_dir: Option<PathBuf>,
@@ -220,14 +229,22 @@ fn main() -> Result<()> {
             let note = create_project(&paths, &name, &status, area.as_deref())?;
             println!("Created {}", note.display());
         }
-        Commands::Archive {
-            project,
-            notes_dir,
-        } => {
+        Commands::Archive { project, notes_dir } => {
             let root = resolve_notes_dir(notes_dir)?;
             let paths = NotesPaths::from_root(root);
             let dest = archive_project(&paths, &project)?;
             println!("Archived {}", dest.display());
+        }
+        Commands::List { status, notes_dir } => {
+            let root = resolve_notes_dir(notes_dir)?;
+            let paths = NotesPaths::from_root(root);
+            let filter = if status.eq_ignore_ascii_case("all") {
+                None
+            } else {
+                Some(status.as_str())
+            };
+            let output = list_projects(&paths, filter)?;
+            print!("{output}");
         }
         Commands::Read {
             path,
