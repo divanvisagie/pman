@@ -82,6 +82,20 @@ pman init .
 pman verify --path .
 pman new "My Feature" --status active</code></pre>
 
+      <p>
+        For hybrid MCP setups, install and run <code>pman-mcp</code> as a Python MCP shim
+        over the Rust CLI:
+      </p>
+
+<pre><code>pipx install "git+https://github.com/divanvisagie/pman"
+pman-mcp --transport stdio --notes-dir ~/Notes
+pman-mcp --transport streamable-http --host 127.0.0.1 --port 8000 --notes-dir ~/Notes</code></pre>
+
+      <p>
+        The Rust <code>pman</code> binary must be available on <code>PATH</code> (or configured with
+        <code>--pman-bin</code>).
+      </p>
+
       <h2>Workflow In Five Steps</h2>
 
       <p>

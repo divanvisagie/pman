@@ -1,0 +1,1 @@
+"""pman-mcp package."""

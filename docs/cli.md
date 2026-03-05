@@ -239,6 +239,59 @@ pman skill generate para-notes > .pman/skills/para-notes/SKILL.md
 Options:
 - `<profile>` is optional and defaults to `para-notes`.
 
+### mcp
+
+Start the pman MCP server for note/project tools.
+
+```sh
+# HTTP transport (default)
+pman mcp --notes-dir ~/Notes
+pman mcp --bind 127.0.0.1 --port 3100 --notes-dir ~/Notes
+
+# stdio transport (for subprocess-based MCP clients)
+pman mcp --transport stdio --notes-dir ~/Notes
+```
+
+Options:
+- `--transport <http|stdio>` selects MCP transport (default: `http`).
+- `--notes-dir <path>` overrides the Notes root.
+- HTTP-only options: `--bind`, `--port`, `--tls-cert`, `--tls-key`.
+
+Behavior:
+- `http`: serves streamable HTTP MCP at `http://<bind>:<port>/mcp` (or HTTPS with TLS flags).
+- `stdio`: serves MCP over stdin/stdout for local client process spawning.
+
+### pman-mcp (hybrid MCP shim)
+
+Run a Python MCP server that proxies tool calls to the Rust `pman` CLI.
+
+Install with `pipx` (recommended for the hybrid model):
+
+```sh
+pipx install "git+https://github.com/divanvisagie/pman"
+```
+
+Run:
+
+```sh
+pman-mcp --transport stdio --notes-dir ~/Notes
+pman-mcp --transport streamable-http --host 127.0.0.1 --port 8000 --notes-dir ~/Notes
+```
+
+Prerequisite:
+- Rust `pman` must be installed and available on `PATH` (or provide `--pman-bin`).
+
+Options:
+- `--transport <stdio|streamable-http>` selects transport mode.
+- `--pman-bin <path-or-name>` overrides the Rust `pman` binary command (default: `pman`).
+- `--notes-dir <path>` passes a Notes root override to proxied `pman` commands.
+- `--host <host>` and `--port <port>` configure bind address for streamable HTTP transport.
+- `--streamable-http-path <path>` sets the streamable HTTP endpoint path (default: `/mcp`).
+
+Behavior:
+- Exposes the same core MCP tool names as Rust `pman mcp` (`notes_read`, `notes_write`, `notes_edit`, `project_list`, `project_new`, `project_archive`).
+- Uses subprocess execution of `pman` for strict core-command parity in the hybrid rollout.
+
 ## Notes
 
 - Slugs are derived from the project name (ASCII alnum, dash-separated).

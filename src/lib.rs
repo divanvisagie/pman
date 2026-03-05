@@ -1,3 +1,5 @@
+pub mod mcp;
+
 use anyhow::{Context, Result, bail};
 use chrono::Local;
 use regex::Regex;
@@ -982,7 +984,10 @@ fn is_tool_available(tool: &str) -> bool {
                 return true;
             }
             for ext in &exts {
-                if dir.join(format!("{tool}{}", ext.to_string_lossy())).is_file() {
+                if dir
+                    .join(format!("{tool}{}", ext.to_string_lossy()))
+                    .is_file()
+                {
                     return true;
                 }
             }
@@ -1009,26 +1014,46 @@ fn codex_skill_link(workspace: &Path) -> PathBuf {
 
 #[cfg(unix)]
 fn create_dir_symlink(target: &Path, link: &Path) -> Result<()> {
-    std::os::unix::fs::symlink(target, link)
-        .with_context(|| format!("Failed to create symlink {} -> {}", link.display(), target.display()))
+    std::os::unix::fs::symlink(target, link).with_context(|| {
+        format!(
+            "Failed to create symlink {} -> {}",
+            link.display(),
+            target.display()
+        )
+    })
 }
 
 #[cfg(windows)]
 fn create_dir_symlink(target: &Path, link: &Path) -> Result<()> {
-    std::os::windows::fs::symlink_dir(target, link)
-        .with_context(|| format!("Failed to create symlink {} -> {}", link.display(), target.display()))
+    std::os::windows::fs::symlink_dir(target, link).with_context(|| {
+        format!(
+            "Failed to create symlink {} -> {}",
+            link.display(),
+            target.display()
+        )
+    })
 }
 
 #[cfg(unix)]
 fn create_file_symlink(target: &Path, link: &Path) -> Result<()> {
-    std::os::unix::fs::symlink(target, link)
-        .with_context(|| format!("Failed to create symlink {} -> {}", link.display(), target.display()))
+    std::os::unix::fs::symlink(target, link).with_context(|| {
+        format!(
+            "Failed to create symlink {} -> {}",
+            link.display(),
+            target.display()
+        )
+    })
 }
 
 #[cfg(windows)]
 fn create_file_symlink(target: &Path, link: &Path) -> Result<()> {
-    std::os::windows::fs::symlink_file(target, link)
-        .with_context(|| format!("Failed to create symlink {} -> {}", link.display(), target.display()))
+    std::os::windows::fs::symlink_file(target, link).with_context(|| {
+        format!(
+            "Failed to create symlink {} -> {}",
+            link.display(),
+            target.display()
+        )
+    })
 }
 
 fn remove_existing_path(path: &Path) -> Result<()> {
@@ -1054,14 +1079,12 @@ fn symlink_matches(link: &Path, expected_target: &Path) -> Result<bool> {
     if !metadata.file_type().is_symlink() {
         return Ok(false);
     }
-    let target =
-        fs::read_link(link).with_context(|| format!("Failed to read symlink {}", link.display()))?;
+    let target = fs::read_link(link)
+        .with_context(|| format!("Failed to read symlink {}", link.display()))?;
     let resolved = if target.is_absolute() {
         target
     } else {
-        link.parent()
-            .unwrap_or_else(|| Path::new(""))
-            .join(target)
+        link.parent().unwrap_or_else(|| Path::new("")).join(target)
     };
     Ok(resolved == expected_target)
 }
@@ -1748,8 +1771,12 @@ mod tests {
         let agents_md = workspace.join("AGENTS.md");
         let canonical_dir = canonical_skill_dir(workspace);
         assert!(symlink_matches(&workspace.join("CLAUDE.md"), &agents_md).unwrap());
-        assert!(symlink_matches(&workspace.join(".claude/skills/para-notes"), &canonical_dir).unwrap());
-        assert!(symlink_matches(&workspace.join(".codex/skills/para-notes"), &canonical_dir).unwrap());
+        assert!(
+            symlink_matches(&workspace.join(".claude/skills/para-notes"), &canonical_dir).unwrap()
+        );
+        assert!(
+            symlink_matches(&workspace.join(".codex/skills/para-notes"), &canonical_dir).unwrap()
+        );
     }
 
     #[cfg(unix)]
@@ -1772,8 +1799,12 @@ mod tests {
         let agents_md = workspace.join("AGENTS.md");
         let canonical_dir = canonical_skill_dir(workspace);
         assert!(symlink_matches(&workspace.join("CLAUDE.md"), &agents_md).unwrap());
-        assert!(symlink_matches(&workspace.join(".claude/skills/para-notes"), &canonical_dir).unwrap());
-        assert!(symlink_matches(&workspace.join(".codex/skills/para-notes"), &canonical_dir).unwrap());
+        assert!(
+            symlink_matches(&workspace.join(".claude/skills/para-notes"), &canonical_dir).unwrap()
+        );
+        assert!(
+            symlink_matches(&workspace.join(".codex/skills/para-notes"), &canonical_dir).unwrap()
+        );
         assert_eq!(
             fs::read_to_string(workspace.join(".pman/skills/para-notes/SKILL.md")).unwrap(),
             PARA_NOTES_SKILL

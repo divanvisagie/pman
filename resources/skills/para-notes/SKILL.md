@@ -26,9 +26,17 @@ cargo install --git https://github.com/divanvisagie/pman
 pman init .
 ```
 
+## MCP First, CLI Fallback
+
+When MCP tools are available, prefer MCP tool calls for note and project operations:
+- `project_list`, `project_new`, `project_archive`
+- `notes_read`, `notes_write`, `notes_edit`
+
+Use `pman` CLI commands as fallback when MCP is unavailable, not connected, or missing required capability.
+
 ## Creating Project Notes
 
-Use `pman` to create and manage project notes:
+Use MCP `project_*` tools first, or `pman` CLI fallback:
 
 ```bash
 pman list                        # active projects
@@ -49,7 +57,7 @@ All modes append an entry to `Projects/_registry.md`.
 
 ## Note I/O From Any Directory
 
-Prefer `pman` note commands for file reads and edits, instead of raw shell file operations:
+Prefer MCP `notes_*` tools for file reads and edits. If MCP is unavailable, use `pman` note commands instead of raw shell file operations:
 
 ```bash
 pman read Projects/proj-98-example/README.md --numbered

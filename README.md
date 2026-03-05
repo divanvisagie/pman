@@ -60,6 +60,12 @@ The workspace structure for your repositories is up to you—document it in your
 
 See [`docs/cli.md`](docs/cli.md) for CLI install and command reference.
 
+For hybrid MCP rollouts, this repository also ships `pman-mcp` (Python MCP server that proxies to
+the Rust `pman` CLI). Install it with `pipx install "git+https://github.com/divanvisagie/pman"`
+and run with `pman-mcp --transport stdio --notes-dir ~/Notes`. For HTTP clients, use
+`pman-mcp --transport streamable-http --host 127.0.0.1 --port 8000 --notes-dir ~/Notes`.
+The Rust `pman` binary must also be installed and available on `PATH` (or passed via `--pman-bin`).
+
 ## Configuration
 
 `pman` ships a generic agent rules file plus a user-maintained workspace README:
