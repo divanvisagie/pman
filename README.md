@@ -90,16 +90,16 @@ Skills extend capabilities for specific workflows. This repo includes one merged
 
 | Skill        | Purpose                                                                        |
 | ------------ | ------------------------------------------------------------------------------ |
-| `para-notes` | PARA note management, note I/O commands, and workspace/project boundary guidance |
+| `project` | PARA note management, note I/O commands, and workspace/project boundary guidance |
 
 Canonical skill install path:
 
 ```sh
-mkdir -p ./.pman/skills/para-notes
-cp resources/skills/para-notes/SKILL.md ./.pman/skills/para-notes/SKILL.md
+mkdir -p ./.pman/skills/project
+cp resources/skills/project/SKILL.md ./.pman/skills/project/SKILL.md
 ```
 
-When supported agent CLIs are installed, `pman init` and `pman update` create bridge symlinks automatically. For Claude, that means `CLAUDE.md` pointing to `AGENTS.md` and `.claude/skills/para-notes` pointing to the canonical `.pman/skills/para-notes` directory. Codex gets the same treatment with `.codex/skills/para-notes`. You maintain one set of files; each agent reads them through its own convention.
+When supported agent CLIs are installed, `pman init` and `pman update` create bridge symlinks automatically. For Claude, that means `CLAUDE.md` pointing to `AGENTS.md` and `.claude/skills/project` pointing to the canonical `.pman/skills/project` directory. Codex gets the same treatment with `.codex/skills/project`. You maintain one set of files; each agent reads them through its own convention.
 
 ## Upgrading
 

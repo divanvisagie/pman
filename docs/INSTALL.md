@@ -30,7 +30,7 @@ After setup, verify:
 
 1. `./Notes/Projects/_registry.md` exists
 2. `./AGENTS.md` exists
-3. `./.pman/skills/para-notes/SKILL.md` exists
+3. `./.pman/skills/project/SKILL.md` exists
 4. `pman verify --path .` reports workspace OK
 5. `pman --help` works
 

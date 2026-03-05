@@ -1,5 +1,5 @@
 ---
-name: para-notes
+name: project
 description: Managing notes with PARA and understanding workspace/project boundaries. Use when creating project notes, navigating repositories, organizing notes, searching notes, or tracking SDLC progress.
 allowed-tools: Bash(pman:*), Bash(fd:*), Bash(rg:*), Bash(ls:*), Read, Write, Edit
 ---

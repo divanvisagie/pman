@@ -208,8 +208,8 @@ enum McpTransport {
 enum SkillCommands {
     /// Print a complete SKILL.md template to stdout
     Generate {
-        /// Profile to generate (default: para-notes)
-        #[arg(default_value = "para-notes")]
+        /// Profile to generate (default: project)
+        #[arg(default_value = "project")]
         profile: String,
     },
 }

@@ -13,7 +13,7 @@ const REGISTRY_HEADER: &str = "# Project Registry\n\nFlat list of project notes.
 
 // Embedded resources
 const AGENTS_MD: &str = include_str!("../resources/AGENTS.md");
-const PARA_NOTES_SKILL: &str = include_str!("../resources/skills/para-notes/SKILL.md");
+const PROJECT_SKILL: &str = include_str!("../resources/skills/project/SKILL.md");
 const NOTES_DIR_ENV_VAR: &str = "PMAN_NOTES_DIR";
 const PROJECT_PREFIX_ENV_VAR: &str = "PMAN_PROJECT_PREFIX";
 const DEFAULT_PROJECT_PREFIX: &str = "proj";
@@ -301,8 +301,8 @@ pub fn less_note(notes_dir: Option<PathBuf>, path: &Path) -> Result<Option<Strin
 
 pub fn generate_skill(profile: &str) -> Result<String> {
     match profile {
-        "para-notes" => Ok(generate_para_notes_skill()),
-        _ => bail!("Unknown profile {profile}; supported profiles: para-notes"),
+        "project" => Ok(generate_project_skill()),
+        _ => bail!("Unknown profile {profile}; supported profiles: project"),
     }
 }
 
@@ -482,8 +482,8 @@ fn ensure_contained(root: &Path, target: &Path) -> Result<()> {
     bail!("Resolved path escapes notes root: {}", target.display())
 }
 
-fn generate_para_notes_skill() -> String {
-    PARA_NOTES_SKILL.to_string()
+fn generate_project_skill() -> String {
+    PROJECT_SKILL.to_string()
 }
 
 pub fn create_project(
@@ -997,7 +997,7 @@ fn is_tool_available(tool: &str) -> bool {
 }
 
 fn canonical_skill_dir(workspace: &Path) -> PathBuf {
-    workspace.join(".pman").join("skills").join("para-notes")
+    workspace.join(".pman").join("skills").join("project")
 }
 
 fn canonical_skill_file(workspace: &Path) -> PathBuf {
@@ -1005,11 +1005,11 @@ fn canonical_skill_file(workspace: &Path) -> PathBuf {
 }
 
 fn claude_skill_link(workspace: &Path) -> PathBuf {
-    workspace.join(".claude").join("skills").join("para-notes")
+    workspace.join(".claude").join("skills").join("project")
 }
 
 fn codex_skill_link(workspace: &Path) -> PathBuf {
-    workspace.join(".codex").join("skills").join("para-notes")
+    workspace.join(".codex").join("skills").join("project")
 }
 
 #[cfg(unix)]
@@ -1217,7 +1217,7 @@ pub fn init_workspace(workspace: &Path) -> Result<()> {
     }
 
     let canonical_skill_file = canonical_skill_file(workspace);
-    if ensure_file(&canonical_skill_file, PARA_NOTES_SKILL, false)? {
+    if ensure_file(&canonical_skill_file, PROJECT_SKILL, false)? {
         println!(
             "  create: {}",
             canonical_skill_file
@@ -1306,9 +1306,9 @@ pub fn verify_workspace(workspace: &Path) -> Result<bool> {
 
     let canonical_skill_file = canonical_skill_file(workspace);
     if canonical_skill_file.exists() {
-        println!("  ✓ .pman/skills/para-notes/SKILL.md");
+        println!("  ✓ .pman/skills/project/SKILL.md");
     } else {
-        println!("  ✗ .pman/skills/para-notes/SKILL.md (missing)");
+        println!("  ✗ .pman/skills/project/SKILL.md (missing)");
         all_ok = false;
     }
 
@@ -1324,10 +1324,10 @@ pub fn verify_workspace(workspace: &Path) -> Result<bool> {
         let link = claude_skill_link(workspace);
         let target = canonical_skill_dir(workspace);
         if symlink_matches(&link, &target)? {
-            println!("  ✓ .claude/skills/para-notes -> .pman/skills/para-notes");
+            println!("  ✓ .claude/skills/project -> .pman/skills/project");
         } else {
             println!(
-                "  ✗ .claude/skills/para-notes -> .pman/skills/para-notes (missing or incorrect symlink)"
+                "  ✗ .claude/skills/project -> .pman/skills/project (missing or incorrect symlink)"
             );
             all_ok = false;
         }
@@ -1337,10 +1337,10 @@ pub fn verify_workspace(workspace: &Path) -> Result<bool> {
         let link = codex_skill_link(workspace);
         let target = canonical_skill_dir(workspace);
         if symlink_matches(&link, &target)? {
-            println!("  ✓ .codex/skills/para-notes -> .pman/skills/para-notes");
+            println!("  ✓ .codex/skills/project -> .pman/skills/project");
         } else {
             println!(
-                "  ✗ .codex/skills/para-notes -> .pman/skills/para-notes (missing or incorrect symlink)"
+                "  ✗ .codex/skills/project -> .pman/skills/project (missing or incorrect symlink)"
             );
             all_ok = false;
         }
@@ -1367,8 +1367,8 @@ pub fn update_workspace(workspace: &Path) -> Result<()> {
     println!("  update: AGENTS.md");
 
     let canonical_skill_file = canonical_skill_file(workspace);
-    ensure_file(&canonical_skill_file, PARA_NOTES_SKILL, true)?;
-    println!("  update: .pman/skills/para-notes/SKILL.md");
+    ensure_file(&canonical_skill_file, PROJECT_SKILL, true)?;
+    println!("  update: .pman/skills/project/SKILL.md");
 
     let canonical_skill_dir = canonical_skill_dir(workspace);
     if is_tool_available("claude") {
@@ -1378,13 +1378,13 @@ pub fn update_workspace(workspace: &Path) -> Result<()> {
 
         let link = claude_skill_link(workspace);
         ensure_symlink(&canonical_skill_dir, &link, true, true)?;
-        println!("  update: .claude/skills/para-notes -> .pman/skills/para-notes");
+        println!("  update: .claude/skills/project -> .pman/skills/project");
     }
 
     if is_tool_available("codex") {
         let link = codex_skill_link(workspace);
         ensure_symlink(&canonical_skill_dir, &link, true, true)?;
-        println!("  update: .codex/skills/para-notes -> .pman/skills/para-notes");
+        println!("  update: .codex/skills/project -> .pman/skills/project");
     }
 
     println!(
@@ -1751,10 +1751,10 @@ mod tests {
         init_workspace(workspace).unwrap();
 
         assert!(workspace.join("AGENTS.md").exists());
-        assert!(workspace.join(".pman/skills/para-notes/SKILL.md").exists());
+        assert!(workspace.join(".pman/skills/project/SKILL.md").exists());
         assert!(!workspace.join("CLAUDE.md").exists());
-        assert!(!workspace.join(".claude/skills/para-notes").exists());
-        assert!(!workspace.join(".codex/skills/para-notes").exists());
+        assert!(!workspace.join(".claude/skills/project").exists());
+        assert!(!workspace.join(".codex/skills/project").exists());
     }
 
     #[cfg(unix)]
@@ -1772,11 +1772,9 @@ mod tests {
         let canonical_dir = canonical_skill_dir(workspace);
         assert!(symlink_matches(&workspace.join("CLAUDE.md"), &agents_md).unwrap());
         assert!(
-            symlink_matches(&workspace.join(".claude/skills/para-notes"), &canonical_dir).unwrap()
+            symlink_matches(&workspace.join(".claude/skills/project"), &canonical_dir).unwrap()
         );
-        assert!(
-            symlink_matches(&workspace.join(".codex/skills/para-notes"), &canonical_dir).unwrap()
-        );
+        assert!(symlink_matches(&workspace.join(".codex/skills/project"), &canonical_dir).unwrap());
     }
 
     #[cfg(unix)]
@@ -1789,10 +1787,10 @@ mod tests {
         let workspace = temp.path();
 
         fs::write(workspace.join("CLAUDE.md"), "old").unwrap();
-        fs::create_dir_all(workspace.join(".claude/skills/para-notes")).unwrap();
-        fs::write(workspace.join(".claude/skills/para-notes/SKILL.md"), "old").unwrap();
-        fs::create_dir_all(workspace.join(".codex/skills/para-notes")).unwrap();
-        fs::write(workspace.join(".codex/skills/para-notes/SKILL.md"), "old").unwrap();
+        fs::create_dir_all(workspace.join(".claude/skills/project")).unwrap();
+        fs::write(workspace.join(".claude/skills/project/SKILL.md"), "old").unwrap();
+        fs::create_dir_all(workspace.join(".codex/skills/project")).unwrap();
+        fs::write(workspace.join(".codex/skills/project/SKILL.md"), "old").unwrap();
 
         update_workspace(workspace).unwrap();
 
@@ -1800,14 +1798,12 @@ mod tests {
         let canonical_dir = canonical_skill_dir(workspace);
         assert!(symlink_matches(&workspace.join("CLAUDE.md"), &agents_md).unwrap());
         assert!(
-            symlink_matches(&workspace.join(".claude/skills/para-notes"), &canonical_dir).unwrap()
+            symlink_matches(&workspace.join(".claude/skills/project"), &canonical_dir).unwrap()
         );
-        assert!(
-            symlink_matches(&workspace.join(".codex/skills/para-notes"), &canonical_dir).unwrap()
-        );
+        assert!(symlink_matches(&workspace.join(".codex/skills/project"), &canonical_dir).unwrap());
         assert_eq!(
-            fs::read_to_string(workspace.join(".pman/skills/para-notes/SKILL.md")).unwrap(),
-            PARA_NOTES_SKILL
+            fs::read_to_string(workspace.join(".pman/skills/project/SKILL.md")).unwrap(),
+            PROJECT_SKILL
         );
     }
 
@@ -1975,8 +1971,8 @@ mod tests {
 
     #[test]
     fn generate_skill_supports_para_notes() {
-        let output = generate_skill("para-notes").unwrap();
-        assert!(output.contains("name: para-notes"));
+        let output = generate_skill("project").unwrap();
+        assert!(output.contains("name: project"));
         assert!(output.contains("pman read"));
         assert!(output.contains("pman edit"));
     }

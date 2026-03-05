@@ -60,9 +60,9 @@ Creates:
 - `Notes/Projects/`, `Notes/Areas/`, `Notes/Resources/`, `Notes/Archives/Projects/`
 - `Notes/Projects/_registry.md` with header template
 - `AGENTS.md` (generic workflow rules)
-- `.pman/skills/para-notes/SKILL.md` (canonical skill install)
-- If `claude` is installed: `CLAUDE.md` -> `AGENTS.md` and `.claude/skills/para-notes` -> `.pman/skills/para-notes`
-- If `codex` is installed: `.codex/skills/para-notes` -> `.pman/skills/para-notes`
+- `.pman/skills/project/SKILL.md` (canonical skill install)
+- If `claude` is installed: `CLAUDE.md` -> `AGENTS.md` and `.claude/skills/project` -> `.pman/skills/project`
+- If `codex` is installed: `.codex/skills/project` -> `.pman/skills/project`
 
 Behavior:
 - Skips any file or directory that already exists (never overwrites)
@@ -79,7 +79,7 @@ pman update --path ~/src # specific path
 
 Updates:
 - `AGENTS.md`
-- `.pman/skills/para-notes/SKILL.md`
+- `.pman/skills/project/SKILL.md`
 - Agent bridge symlinks for installed CLIs (`claude`, `codex`)
 
 Behavior:
@@ -99,9 +99,9 @@ Checks:
 - Notes directory structure (Projects, Areas, Resources, Archives/Projects)
 - `Notes/Projects/_registry.md`
 - `AGENTS.md`
-- `.pman/skills/para-notes/SKILL.md`
-- If `claude` is installed: `CLAUDE.md` -> `AGENTS.md` and `.claude/skills/para-notes` -> `.pman/skills/para-notes`
-- If `codex` is installed: `.codex/skills/para-notes` -> `.pman/skills/para-notes`
+- `.pman/skills/project/SKILL.md`
+- If `claude` is installed: `CLAUDE.md` -> `AGENTS.md` and `.claude/skills/project` -> `.pman/skills/project`
+- If `codex` is installed: `.codex/skills/project` -> `.pman/skills/project`
 
 Behavior:
 - Reports ✓ for present items, ✗ for missing
@@ -232,12 +232,12 @@ Behavior:
 Print a complete `SKILL.md` template to stdout.
 
 ```sh
-pman skill generate > .pman/skills/para-notes/SKILL.md
-pman skill generate para-notes > .pman/skills/para-notes/SKILL.md
+pman skill generate > .pman/skills/project/SKILL.md
+pman skill generate project > .pman/skills/project/SKILL.md
 ```
 
 Options:
-- `<profile>` is optional and defaults to `para-notes`.
+- `<profile>` is optional and defaults to `project`.
 
 ### mcp
 
