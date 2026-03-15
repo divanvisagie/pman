@@ -1,5 +1,3 @@
-pub mod mcp;
-
 use anyhow::{Context, Result, bail};
 use chrono::Local;
 use regex::Regex;
@@ -283,7 +281,8 @@ pub fn less_note(notes_dir: Option<PathBuf>, path: &Path) -> Result<Option<Strin
     let root = canonical_notes_root(notes_dir)?;
     let target = resolve_existing_note_file(&root, path)?;
 
-    if std::io::stdin().is_terminal() && std::io::stdout().is_terminal() {
+    let is_tty = std::io::stdin().is_terminal() && std::io::stdout().is_terminal();
+    if is_tty && std::env::var_os("PMAN_FORCE_CAT").is_none() {
         let status = Command::new("less")
             .arg(&target)
             .status()
@@ -1967,7 +1966,10 @@ mod tests {
         fs::create_dir_all(file.parent().unwrap()).unwrap();
         fs::write(&file, "hello\n").unwrap();
 
+        // SAFETY: this test runs single-threaded; no other thread reads PMAN_FORCE_CAT.
+        unsafe { std::env::set_var("PMAN_FORCE_CAT", "1") };
         let output = less_note(Some(root), Path::new("Projects/less.md")).unwrap();
+        unsafe { std::env::remove_var("PMAN_FORCE_CAT") };
         assert_eq!(output.as_deref(), Some("hello\n"));
     }
 

@@ -1,5 +1,5 @@
 use anyhow::Result;
-use clap::{Parser, Subcommand, ValueEnum};
+use clap::{Parser, Subcommand};
 use std::io::Read;
 use std::path::PathBuf;
 
@@ -175,33 +175,6 @@ enum Commands {
         #[command(subcommand)]
         command: SkillCommands,
     },
-    /// Start an MCP server for remote note access
-    Mcp {
-        /// MCP transport to use
-        #[arg(long, value_enum, default_value_t = McpTransport::Http)]
-        transport: McpTransport,
-        /// Port to listen on (HTTP transport only)
-        #[arg(long, default_value_t = 3100)]
-        port: u16,
-        /// Bind address (HTTP transport only)
-        #[arg(long, default_value = "0.0.0.0")]
-        bind: String,
-        /// Override Notes root directory
-        #[arg(long)]
-        notes_dir: Option<PathBuf>,
-        /// TLS certificate file (PEM, HTTP transport only)
-        #[arg(long)]
-        tls_cert: Option<PathBuf>,
-        /// TLS private key file (PEM, HTTP transport only)
-        #[arg(long)]
-        tls_key: Option<PathBuf>,
-    },
-}
-
-#[derive(Clone, Copy, Debug, Eq, PartialEq, ValueEnum)]
-enum McpTransport {
-    Http,
-    Stdio,
 }
 
 #[derive(Subcommand)]
@@ -214,8 +187,7 @@ enum SkillCommands {
     },
 }
 
-#[tokio::main]
-async fn main() -> Result<()> {
+fn main() -> Result<()> {
     let cli = Cli::parse();
 
     match cli.command {
@@ -364,64 +336,8 @@ async fn main() -> Result<()> {
                 print!("{output}");
             }
         },
-        Commands::Mcp {
-            transport,
-            port,
-            bind,
-            notes_dir,
-            tls_cert,
-            tls_key,
-        } => {
-            let root = resolve_notes_dir(notes_dir)?;
-            let paths = NotesPaths::from_root(root);
-            match transport {
-                McpTransport::Http => {
-                    let tls = match (tls_cert, tls_key) {
-                        (Some(cert), Some(key)) => Some((cert, key)),
-                        (None, None) => None,
-                        _ => {
-                            anyhow::bail!("Both --tls-cert and --tls-key must be provided together")
-                        }
-                    };
-                    pman::mcp::serve(paths, &bind, port, tls).await?;
-                }
-                McpTransport::Stdio => {
-                    if tls_cert.is_some() || tls_key.is_some() {
-                        anyhow::bail!(
-                            "--tls-cert/--tls-key are only supported with --transport http"
-                        );
-                    }
-                    if bind != "0.0.0.0" || port != 3100 {
-                        eprintln!("Ignoring --bind/--port because --transport stdio was selected.");
-                    }
-                    pman::mcp::serve_stdio(paths).await?;
-                }
-            }
-        }
     }
 
     Ok(())
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn mcp_defaults_to_http_transport() {
-        let cli = Cli::try_parse_from(["pman", "mcp"]).expect("valid cli");
-        match cli.command {
-            Commands::Mcp { transport, .. } => assert_eq!(transport, McpTransport::Http),
-            _ => panic!("expected mcp command"),
-        }
-    }
-
-    #[test]
-    fn mcp_accepts_stdio_transport() {
-        let cli = Cli::try_parse_from(["pman", "mcp", "--transport", "stdio"]).expect("valid cli");
-        match cli.command {
-            Commands::Mcp { transport, .. } => assert_eq!(transport, McpTransport::Stdio),
-            _ => panic!("expected mcp command"),
-        }
-    }
-}
