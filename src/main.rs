@@ -41,7 +41,7 @@ enum Commands {
         /// Project name, or explicit project directory name (<prefix>-<number>-<slug>; default prefix: proj or PMAN_PROJECT_PREFIX)
         name: String,
         /// Status label to record in the registry
-        #[arg(long, default_value = "active")]
+        #[arg(long, default_value = "draft")]
         status: String,
         /// Area slug to prefix the project directory slug
         #[arg(long)]

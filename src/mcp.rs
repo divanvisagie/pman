@@ -74,7 +74,7 @@ struct ProjectListParams {
 struct ProjectNewParams {
     #[schemars(description = "Project name (will be slugified for the directory)")]
     name: String,
-    #[schemars(description = "Status label (default: active)")]
+    #[schemars(description = "Status label (default: draft)")]
     status: Option<String>,
     #[schemars(description = "Area slug to prefix the project directory")]
     area: Option<String>,
@@ -186,7 +186,7 @@ impl PmanMcp {
         &self,
         Parameters(params): Parameters<ProjectNewParams>,
     ) -> Result<CallToolResult, McpError> {
-        let status = params.status.unwrap_or_else(|| "active".to_string());
+        let status = params.status.unwrap_or_else(|| "draft".to_string());
         match create_project(&self.paths, &params.name, &status, params.area.as_deref()) {
             Ok(note) => Ok(CallToolResult::success(vec![Content::text(format!(
                 "Created {}",

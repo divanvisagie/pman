@@ -80,13 +80,16 @@ pman less Projects/proj-98-example/README.md
 ## Project Note Template
 
 ```markdown
+---
+status: draft
+---
+
 # <ID>: Name
+
+**Created**: YYYY-MM-DD
 
 ## Summary
 -
-
-## Status
-- active
 
 ## Notes
 -

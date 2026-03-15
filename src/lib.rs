@@ -529,7 +529,7 @@ pub fn create_project(
         let dir_name = format!("{project_prefix}-{next_id}-{slug_full}");
         let area_section = area_slug
             .as_deref()
-            .map(|value| format!("\n## Area\n- {value}\n"))
+            .map(|value| format!("area: {value}\n"))
             .unwrap_or_default();
         (
             format!("PROJ-{next_id}"),
@@ -551,7 +551,7 @@ pub fn create_project(
 
     let created = Local::now().format("%Y-%m-%d");
     let content = format!(
-        "# {id}: {name}\n\n**Created**: {created}\n\n## Summary\n- \n\n## Status\n- {status}{area}\n## Notes\n- \n\n## Next\n- \n",
+        "---\nstatus: {status}\n{area}---\n\n# {id}: {name}\n\n**Created**: {created}\n\n## Summary\n- \n\n## Notes\n- \n\n## Next\n- \n",
         id = project_id,
         name = project_name,
         created = created,
@@ -1626,7 +1626,8 @@ mod tests {
         );
 
         let note = fs::read_to_string(&note_path).unwrap();
-        assert!(note.starts_with("# MYSLUG-1192: myslug-1192-mythingy"));
+        assert!(note.starts_with("---\nstatus: active\n---"));
+        assert!(note.contains("# MYSLUG-1192: myslug-1192-mythingy"));
 
         let registry = fs::read_to_string(&paths.registry).unwrap();
         assert!(registry.contains("| MYSLUG-1192 | myslug-1192-mythingy | active |"));
@@ -1648,7 +1649,8 @@ mod tests {
         );
 
         let note = fs::read_to_string(&note_path).unwrap();
-        assert!(note.starts_with("# Z2222-LOL-CATS: z2222-lol-cats"));
+        assert!(note.starts_with("---\nstatus: active\n---"));
+        assert!(note.contains("# Z2222-LOL-CATS: z2222-lol-cats"));
 
         let registry = fs::read_to_string(&paths.registry).unwrap();
         assert!(registry.contains("| Z2222-LOL-CATS | z2222-lol-cats | active |"));
