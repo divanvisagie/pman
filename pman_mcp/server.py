@@ -5,6 +5,7 @@ from typing import Optional
 from mcp.server.fastmcp import FastMCP
 
 from .bridge import PmanBridge
+from .gating import gating_response
 
 
 def build_server(
@@ -79,5 +80,16 @@ def build_server(
     @mcp.tool(description="Archive a project by moving it to Notes/Archives/Projects.")
     def project_archive(project: str) -> str:
         return bridge.run("archive", project)
+
+    @mcp.tool(
+        description=(
+            "Evaluate which tools are relevant for the current message. "
+            "Returns verdicts: 'exclude' removes a tool from consideration, "
+            "'claim' means the tool should handle the request directly. "
+            "Tools not mentioned are included as normal."
+        )
+    )
+    def _tool_gating(message: str, content_type: str = "text") -> str:
+        return gating_response(message)
 
     return mcp
