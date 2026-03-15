@@ -8,6 +8,7 @@ test:
 
 install:
 	cargo install --path .
+	pipx install --force .
 
 serve:
 	python3 -m http.server --directory docs 8000
